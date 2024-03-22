@@ -6,7 +6,7 @@ from parser.config import PRIMITIVES
 
 #a program is a list of data objects
 class Object:
-    def __init__(self, name, fields = List[Field]):
+    def __init__(self, name, fields: List[Field]):
         self.name = name
         self.fields = fields
     @staticmethod

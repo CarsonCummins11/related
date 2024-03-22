@@ -1,8 +1,14 @@
 from parser.program import Program
-
+from generator.writer import Writer
+from generator.api.api import API
 
 def run(src: str):
-    Program(src).parse()
+    p = Program(src)
+    p.parse()
+    api = API("tt", p.objects)
+    w = Writer("tt")
+    api.generate(w)
+    w.flush()
     
 
 
