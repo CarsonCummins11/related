@@ -1,0 +1,1 @@
+PRIMITIVES = ["int", "float", "string", "bool"]
