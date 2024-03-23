@@ -98,6 +98,11 @@ class Object:
         o.use_file(f"objects/{self.name}.go")
         o.w(f"package objects")
         o.w(f"")
+        
+        o.w(f"import (")
+        o.w(f"    \"{o.package()}/derivers\"")
+        o.w(f")")
+        o.w(f"")
 
         o.w("type " + self.name + " struct {")
         for field in self.data_fields.values():

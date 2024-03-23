@@ -5,12 +5,12 @@ T1 {
     s: "a string here";
     n: 55;
     w: 42.123;
-    mbs: countChunks(data, 8);
+    mbs: CountChunks(data, 8);
 }
 
 T2 {
     name: string;
     things: T1;
     videos: string;
-    video_count: count(countChunks(videos,9));
+    video_count: Count(CountChunks(videos,9));
 }

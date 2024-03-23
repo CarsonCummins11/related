@@ -28,5 +28,3 @@ class API:
         o.w(f"")
         o.w(f'    router.Run("localhost:8080")')
         o.w(f"}}")
-        #create go mod/sum files
-        os.system(f"cd {o.path} && go mod init {self.name}")
