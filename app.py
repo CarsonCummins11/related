@@ -1,6 +1,7 @@
 from parser.program import Program
 from generator.writer import Writer
 from generator.api.api import API
+from generator.data.data_platform import DataPlatform
 
 def run(src: str):
     p = Program(src)
@@ -8,6 +9,8 @@ def run(src: str):
     api = API("tt", p.objects)
     w = Writer("tt")
     api.generate(w)
+    data = DataPlatform(p.objects)
+    data.generate(w)
     w.flush()
     
 
@@ -15,4 +18,4 @@ def run(src: str):
 
 
 if __name__ == '__main__':
-    run(open('test.rltd').read())
+    run(open('test.rsl').read())

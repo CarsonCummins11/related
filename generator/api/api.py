@@ -16,7 +16,7 @@ class API:
         o.w(f"")
         o.w(f"import (")
         o.w(f'    "github.com/gin-gonic/gin"')
-        o.w(f'    "{self.name}/objects"')
+        o.w(f'    "{self.name}/routes"')
         o.w(f")")
         o.w(f"")
         o.w(f"func main() {{")

@@ -27,3 +27,7 @@ class Writer:
             with open(os.path.join(self.path, file_name), "w+") as f:
                 f.write(content)
         self.buffer = {}
+
+    def package(self):
+        #returns the current parent go package being written to
+        return self.path.split("/")[0]

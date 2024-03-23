@@ -1,4 +1,4 @@
-t1 {
+T1 {
     name: string;
     data: string;
     t: true;
@@ -8,9 +8,9 @@ t1 {
     mbs: countChunks(data, 8);
 }
 
-t2 {
+T2 {
     name: string;
-    things: t1;
+    things: T1;
     videos: string;
     video_count: count(countChunks(videos,9));
 }
