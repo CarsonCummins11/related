@@ -21,6 +21,8 @@ def run(src: str, trg: str):
     os.system(f"cd {trg} && go mod tidy")
     os.system(f"cd {trg} && go build")
     
+    unimplemented_functions = [f.name for f in p.function_table.values() if not f.available]
+    print(f"Unimplemented functions: {unimplemented_functions}")
 
 
 
