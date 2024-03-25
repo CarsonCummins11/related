@@ -1,0 +1,1 @@
+func Count(a int) int

@@ -36,6 +36,7 @@ class Deriver:
         argout = []
         for name, type in zip(self.arg_names, self.arg_types):
             argout.append(f"{name} {type}")
+        print(argout)
         o.w(f"func {self.name}(" + ",".join(argout) +f") {self.return_type} {{")
         o.w(f"    {self.body}")
         o.w(f"}}")

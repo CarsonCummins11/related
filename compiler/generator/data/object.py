@@ -127,3 +127,15 @@ class Object:
         self.write_delete(o)
 
         o.use_file(cur_file)
+
+
+    def generate_schema(self):
+        #TODO make this work with postrgres
+        ret = f"CREATE TABLE {self.name} (\n"
+        for field in self.data_fields.values():
+            ret += f"    {field.name} {field.t},\n"
+        for field in self.derived_fields.values():
+            ret += f"    {field.name} {field.t},\n"
+        ret += "    ID TEXT PRIMARY KEY\n"
+        ret += ");"
+        return ret
