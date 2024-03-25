@@ -2,13 +2,19 @@ from parser.reader import Reader
 from parser.field import Field
 from typing import List
 from parser.value import VariableValue, FunctionValue
-from parser.config import PRIMITIVES
+from parser.config import PRIMITIVES, SQL_KEYWORDS
 
 #a program is a list of data objects
 class Object:
-    def __init__(self, name, fields: List[Field]):
+    def __init__(self, name:str, fields: List[Field]):
         self.name = name
+        assert self.name not in PRIMITIVES, f"Object name {self.name} is a primitive type"
+        assert self.name not in SQL_KEYWORDS, f"Object name {self.name} is a SQL keyword"
+        assert self.name[0].isupper(), f"Object name {self.name} must start with a capital letter"
         self.fields = fields
+        for f in self.fields:
+            assert f.name not in PRIMITIVES, f"Field name {f.name} is a primitive type"
+            assert f.name not in SQL_KEYWORDS, f"Field name {f.name} is a SQL keyword"
     @staticmethod
     def parse(reader: Reader, function_table) -> "Object":
         name = reader.readuntil("{")
