@@ -1,6 +1,7 @@
 import parser.program
 import parser.field
 import parser.value
+from parser.config import PRIMITIVES
 from generator.writer import Writer
 
 def correct_type(t: str):
@@ -8,6 +9,21 @@ def correct_type(t: str):
             return "float64"
         return t
 
+def correct_type_sql(t: str):
+    if t == "float":
+        return "REAL"
+    if t=="string":
+        return "TEXT"
+    if t=="int":
+        return "INTEGER"
+    if t=="bool":
+        return "BOOLEAN"
+    
+    if t not in PRIMITIVES:
+        #t is an object, we we link with id
+        return "TEXT"
+
+    assert False, f"Unknown type {t}"
 
 class Object:
     def __init__(self, parser_object: parser.program.Object):
@@ -56,14 +72,47 @@ class Object:
     def write_create(self, o: Writer):
         o.w(f"func Create{self.name}(obj {self.name}) ({self.name}Hydrated, error) {{")
         o.w(f"    ret_obj := hydrate{self.name}(obj)")
+        query = f"INSERT INTO {self.name} ("
+        for field in self.data_fields.values():
+            query += f"d_{field.name},"
+        for field in self.derived_fields.values():
+            query += f"d_{field.name},"
+        query = query[:-1]
+        query += ") VALUES ("
+        for i,field in enumerate(self.data_fields.values()):
+            query+=f"${i},"
+        for i,field in enumerate(self.derived_fields.values()):
+            query+=f"${i+len(self.data_fields)},"
+        query = query[:-1]
+        query += ") RETURNING ID"
+        o.w(f"    the_id, err := database.DB.Exec(context.Background(), \"{query}\",")
+        for field in self.data_fields.values():
+            o.w(f"        ret_obj.{field.name},")
+        for field in self.derived_fields.values():
+            o.w(f"        ret_obj.{field.name},")
+        o.w(f"    )")
+        o.w(f"    if err != nil {{")
+        o.w(f"        return {self.name}Hydrated{{}}, err")
+        o.w(f"    }}")
+        o.w(f"    ret_obj.ID = the_id.String()")
         o.w(f"    return ret_obj, nil")
         o.w("}")
         o.w("")
 
     def write_read(self, o: Writer):
         o.w(f"func Read{self.name}(id string) ({self.name}Hydrated, error) {{")
-        o.w(f"    //TODO: Implement this")
-        o.w(f"    return {self.name}Hydrated{{}}, nil")
+        o.w(f"    var obj {self.name}Hydrated")
+        o.w(f"    err := database.DB.QueryRow(context.Background(), \"SELECT * FROM {self.name} WHERE ID = $1\", id).Scan(")
+        for field in self.data_fields.values():
+            o.w(f"        &obj.{field.name},")
+        for field in self.derived_fields.values():
+            o.w(f"        &obj.{field.name},")
+        o.w(f"        &obj.ID,")
+        o.w(f"    )")
+        o.w(f"    if err != nil {{")
+        o.w(f"        return {self.name}Hydrated{{}}, err")
+        o.w(f"    }}")
+        o.w(f"    return obj, nil")
         o.w("}")
         o.w("")
     
@@ -76,7 +125,7 @@ class Object:
 
     def write_delete(self, o: Writer):
         o.w(f"func Delete{self.name}(id string) error {{")
-        o.w(f"    //TODO: Implement this")
+        o.w(f"    database.DB.Exec(context.Background(), \"DELETE FROM {self.name} WHERE ID = $1\", id)")
         o.w(f"    return nil")
         o.w("}")
         o.w("")
@@ -98,9 +147,12 @@ class Object:
         o.use_file(f"objects/{self.name}.go")
         o.w(f"package objects")
         o.w(f"")
-        
+        non_constant_derived = [field for field in self.derived_fields.values() if type(field.derived.value) == parser.value.FunctionValue]
         o.w(f"import (")
-        o.w(f"    \"{o.package()}/derivers\"")
+        if len(non_constant_derived) > 0:
+            o.w(f"    \"{o.package()}/derivers\"")
+        o.w(f"    \"context\"")
+        o.w(f'      "{o.package()}/database"')    
         o.w(f")")
         o.w(f"")
 
@@ -129,13 +181,13 @@ class Object:
         o.use_file(cur_file)
 
 
-    def generate_schema(self):
-        #TODO make this work with postrgres
+    def generate_schema(self, o: Writer):
         ret = f"CREATE TABLE {self.name} (\n"
         for field in self.data_fields.values():
-            ret += f"    {field.name} {field.t},\n"
+            ret += f"    d_{field.name} {correct_type_sql(field.t)} NOT NULL,\n"
         for field in self.derived_fields.values():
-            ret += f"    {field.name} {field.t},\n"
-        ret += "    ID TEXT PRIMARY KEY\n"
+            ret += f"    d_{field.name} {correct_type_sql(field.t)} NOT NULL,\n"
+        ret += "    ID SERIAL PRIMARY KEY\n"
         ret += ");"
+        o.w(ret)
         return ret

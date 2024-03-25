@@ -1,16 +1,14 @@
-T1 {
+Usr {
     name: string;
-    data: string;
+    item: Itm;
     t: true;
     s: "a string here";
     n: 55;
     w: 42.123;
-    mbs: CountChunks(data, 8);
 }
 
-T2 {
+Itm {
     name: string;
-    things: T1;
-    videos: string;
-    video_count: Count(CountChunks(videos,9));
+    value: int;
+    doubleValue: Times2(value);
 }

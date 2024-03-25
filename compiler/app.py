@@ -47,10 +47,6 @@ def run(src: str, trg: str):
     derivers = Derivers(p.function_table)
     derivers.generate(w)
     w.flush()
-    #create go mod/sum files
-    os.system(f"cd {trg} && go mod init {trg}")
-    os.system(f"cd {trg} && go mod tidy")
-    os.system(f"cd {trg} && go build")
     
     unimplemented_functions = [f.name for f in p.function_table.values() if not f.available]
     print(f"Unimplemented functions: {unimplemented_functions}")

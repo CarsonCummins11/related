@@ -1,6 +1,5 @@
 package derived
 
-func Count(a int) int {
-	return a
-
+func Times2(a int) int {
+	return a * 2
 }
