@@ -32,7 +32,6 @@ class DataPlatform:
         o.w('       fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\\n", err)')
         o.w('   }')
         o.w('   DB = conn')
-        o.w('   defer conn.Close(context.Background())')
         o.w('}')
         o.w("")
         for obj in self.objects:

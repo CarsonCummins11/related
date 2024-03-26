@@ -80,21 +80,17 @@ class Object:
         query = query[:-1]
         query += ") VALUES ("
         for i,field in enumerate(self.data_fields.values()):
-            query+=f"${i},"
+            query+=f"${i+1},"
         for i,field in enumerate(self.derived_fields.values()):
-            query+=f"${i+len(self.data_fields)},"
+            query+=f"${i+len(self.data_fields)+1},"
         query = query[:-1]
         query += ") RETURNING ID"
-        o.w(f"    the_id, err := database.DB.Exec(context.Background(), \"{query}\",")
+        o.w(f"    database.DB.QueryRow(context.Background(), \"{query}\",")
         for field in self.data_fields.values():
             o.w(f"        ret_obj.{field.name},")
         for field in self.derived_fields.values():
             o.w(f"        ret_obj.{field.name},")
-        o.w(f"    )")
-        o.w(f"    if err != nil {{")
-        o.w(f"        return {self.name}Hydrated{{}}, err")
-        o.w(f"    }}")
-        o.w(f"    ret_obj.ID = the_id.String()")
+        o.w(f"    ).Scan(&ret_obj.ID)")
         o.w(f"    return ret_obj, nil")
         o.w("}")
         o.w("")
@@ -110,6 +106,7 @@ class Object:
         o.w(f"        &obj.ID,")
         o.w(f"    )")
         o.w(f"    if err != nil {{")
+        
         o.w(f"        return {self.name}Hydrated{{}}, err")
         o.w(f"    }}")
         o.w(f"    return obj, nil")

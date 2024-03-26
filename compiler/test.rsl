@@ -1,14 +1,14 @@
 Usr {
-    name: string;
-    item: Itm;
-    t: true;
-    s: "a string here";
-    n: 55;
-    w: 42.123;
+    Name: string;
+    Item: Itm;
+    Tr: true;
+    S: "a string here";
+    N: 55;
+    W: 42.123;
 }
 
 Itm {
     Name: string;
-    Valued: int;
-    doubleValue: Times2(Valued);
+    Value: int;
+    DoubleValue: Times2(Value);
 }

@@ -15,6 +15,7 @@ class Object:
         for f in self.fields:
             assert f.name not in PRIMITIVES, f"Field name {f.name} is a primitive type"
             assert f.name not in SQL_KEYWORDS, f"Field name {f.name} is a SQL keyword"
+            assert f.name[0].isupper(), f"Field name {f.name} must start with a capital letter"
     @staticmethod
     def parse(reader: Reader, function_table) -> "Object":
         name = reader.readuntil("{")
