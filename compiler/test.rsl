@@ -8,7 +8,7 @@ Usr {
 }
 
 Itm {
-    name: string;
-    value: int;
-    doubleValue: Times2(value);
+    Name: string;
+    Valued: int;
+    doubleValue: Times2(Valued);
 }

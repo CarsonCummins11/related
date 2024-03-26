@@ -33,6 +33,7 @@ def gather_function_table(path: str = "derived"):
 
         src = "\n".join([x.decode() for x in subprocess.Popen(f"go doc -C {pkg_root} -short -src {pkg_name}.{fname}",shell=True, stdout=subprocess.PIPE).stdout.readlines()][1:-1])
         function_table[fname] = Function(fname, argtypes, freturn, True,src, argnames)
+        print(function_table[fname].arg_types)
     return function_table
 
 def run(src: str, trg: str):

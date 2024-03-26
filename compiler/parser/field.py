@@ -1,4 +1,4 @@
-from parser.value import Value, VariableValue
+from parser.value import Value, VariableValue, FunctionValue
 from parser.config import PRIMITIVES
 from parser.reader import Reader
 class Field:
@@ -22,9 +22,15 @@ class Field:
                 if type(self.derived.value) == VariableValue:
                     if self.derived.value.name in possible_types:
                         self.t = self.derived.value.name
+                        print("derived type from variable name: "+self.t)
                         self.derived = None
                 else:
                     print(f"Field {self.name} is now of type {self.t}, derived from {self.derived.t}")
+        elif type(self.derived.value) == FunctionValue:
+            print(f"Field {self.name} is derived from a function. Constructing types.")
+            self.derived.construct_type(parent, function_table, custom_types)
+        else:
+            print(f"Field {self.name} is already of type {self.t}. Skipping type resolution")
 
     @staticmethod
     def parse(reader: Reader, function_table: dict = {}, expected_type="undefined") -> "Field":

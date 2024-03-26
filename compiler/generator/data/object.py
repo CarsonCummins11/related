@@ -151,8 +151,8 @@ class Object:
         o.w(f"import (")
         if len(non_constant_derived) > 0:
             o.w(f"    \"{o.package()}/derivers\"")
-        o.w(f"    \"context\"")
-        o.w(f'      "{o.package()}/database"')    
+        o.w('    "context"')
+        o.w(f'   "{o.package()}/database"')    
         o.w(f")")
         o.w(f"")
 

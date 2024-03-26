@@ -33,7 +33,7 @@ class Program:
     def __init__(self, src, function_table = {}):
         self.src = src
         self.reader = Reader(src)
-        self.objects = []
+        self.objects:List[Object] = []
         self.function_table = function_table
 
     def parse(self):

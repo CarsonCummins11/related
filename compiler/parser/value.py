@@ -28,12 +28,14 @@ class FunctionValue:
         self.args = args
         self.t = t
     def construct_types(self, parent, function_table: dict, custom_types: list):
+        print("\n\n\n\n\n\nconstructing types for function "+self.name)
         if self.name in function_table:
             print("Function "+self.name+" already exists in function table. Getting type information.")
             if self.t == "undefined":
                 self.t = function_table[self.name].t
             else:
                 assert self.t == function_table[self.name].t, f"Function {self.name} is of type {self.t}, expected {function_table[self.name].t}."
+            assert self.t != "undefined", f"Function {self.name} has no type information."
         for arg in self.args:
             if arg.t == "undefined":
                 arg.construct_type(parent, function_table, custom_types)
@@ -44,6 +46,8 @@ class FunctionValue:
                 raise Exception(f"Argument {arg.value.name} of function {self.name} is of type {arg.t}, expected {argt}.")
             elif argt == "undefined" and arg.t != "undefined":
                 function_table[self.name].arg_types[i] = arg.t
+            else:
+                assert argt != "undefined", f"Argument {arg.value.name} of function {self.name} has no type information."
             i+=1
         
         if self.t == "undefined":
@@ -127,12 +131,12 @@ class Value:
         
     def construct_type(self, parent, function_table: dict, custom_types: list):
         poss_types = PRIMITIVES + custom_types
-
-        if self.t == "undefined":
-            if type(self.value) == FunctionValue:
+        if type(self.value) == FunctionValue:
                 self.value.construct_types(parent, function_table, custom_types)
+                assert self.value.t != "undefined", f"Function {self.value.name} has no type information."
                 self.t = self.value.t
-            elif type(self.value) == VariableValue:
+        elif self.t == "undefined":
+            if type(self.value) == VariableValue:
                 if self.value.name in poss_types:
                     self.t = self.value.name
                 else:
@@ -141,6 +145,7 @@ class Value:
                         var_field = parent.fields[poss_variables.index(self.value.name)]
                         if var_field.t == "undefined":
                             var_field.resolve_type(parent, function_table, custom_types)
+                        assert var_field.t != "undefined", f"Variable {self.value.name} has no type information."
                         self.t = var_field.t
                     else:
                         raise Exception(f"Variable {self.value.name} not found.")
