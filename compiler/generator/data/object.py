@@ -74,9 +74,9 @@ class Object:
         o.w(f"    ret_obj := hydrate{self.name}(obj)")
         query = f"INSERT INTO {self.name} ("
         for field in self.data_fields.values():
-            query += f"d_{field.name},"
+            query += f"{field.name},"
         for field in self.derived_fields.values():
-            query += f"d_{field.name},"
+            query += f"{field.name},"
         query = query[:-1]
         query += ") VALUES ("
         for i,field in enumerate(self.data_fields.values()):
@@ -134,6 +134,7 @@ class Object:
             o.w(f"    new_obj.{field.name} = obj.{field.name}")
         for field in self.derived_fields.values():
             o.w(f"    new_obj.{field.name} = "+self.get_field_derivation_string(field))
+        o.w(f"    new_obj.ID = obj.ID")
         o.w(f"    return new_obj")
         o.w("}")
         o.w("")
@@ -181,9 +182,9 @@ class Object:
     def generate_schema(self, o: Writer):
         ret = f"CREATE TABLE {self.name} (\n"
         for field in self.data_fields.values():
-            ret += f"    d_{field.name} {correct_type_sql(field.t)} NOT NULL,\n"
+            ret += f"    {field.name} {correct_type_sql(field.t)} NOT NULL,\n"
         for field in self.derived_fields.values():
-            ret += f"    d_{field.name} {correct_type_sql(field.t)} NOT NULL,\n"
+            ret += f"    {field.name} {correct_type_sql(field.t)} NOT NULL,\n"
         ret += "    ID SERIAL PRIMARY KEY\n"
         ret += ");"
         o.w(ret)

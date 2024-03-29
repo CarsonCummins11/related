@@ -30,8 +30,12 @@ class Object:
     def write_read_route(self, o: Writer):
         o.w(f"func Read{self.name}_route(c *gin.Context) {{")
         #get the id from the request
-        o.w(f"    id := c.Query(\"id\")")
+        o.w(f"    id := c.Param(\"id\")")
         o.w(f"    new_{self.name}, err := objects.Read{self.name}(id)")
+        o.w(f'    if err != nil && err.Error() == "no rows in result set" {{')
+        o.w(f'        c.JSON(http.StatusNotFound, gin.H{{"status": "not found"}})')
+        o.w(f'        return')
+        o.w(f"    }}")
         o.w(f"    if err != nil {{")
         o.w(f"        panic(err)")
         o.w(f"    }}")
@@ -81,7 +85,7 @@ class Object:
     def generate_route_strings(self, o: Writer):
         o.w(f'    {self.name} := router.Group("/{self.name}")')
         o.w(f'    {self.name}.POST("/create", routes.Create{self.name}_route)')
-        o.w(f'    {self.name}.GET("/read", routes.Read{self.name}_route)')
+        o.w(f'    {self.name}.GET("/read/:id", routes.Read{self.name}_route)')
         o.w(f'    {self.name}.POST("/update", routes.Update{self.name}_route)')
         o.w(f'    {self.name}.POST("/delete", routes.Delete{self.name}_route)')
         o.w(f"")
