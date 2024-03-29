@@ -3,6 +3,7 @@ import parser.field
 import parser.value
 from parser.config import PRIMITIVES
 from generator.writer import Writer
+from typing import List
 
 def correct_type(t: str):
         if t == "float":
@@ -29,12 +30,8 @@ class Object:
     def __init__(self, parser_object: parser.program.Object):
         self.name = parser_object.name
         self.data_fields = {}
-        self.derived_fields = {}
-        for field in parser_object.fields:
-            if field.derived:
-                self.derived_fields[field.name] = field
-            else:
-                self.data_fields[field.name] = field
+        self.derived_fields:List[parser.field.Field] = [x for x in parser_object.fields if x.derived]
+        self.data_fields: List[parser.field.Field] = [x for x in parser_object.fields if not x.derived]
 
     def get_field_derivation_string(self,field: parser.field.Field) -> str:
         assert field.derived, f"Field {field.name} is not derived"
@@ -51,7 +48,9 @@ class Object:
         elif type(val) == parser.value.BoolValue:
             return f"{val.value}".lower()
         
+        assert type(val) in [parser.value.FunctionValue, parser.value.VariableValue], f"Unknown value type {type(val)}"
         ret = ""
+        val: parser.value.FunctionValue
         if type(val) == parser.value.FunctionValue:
             ret += f"derivers.{val.name}("
             for arg in val.args:
@@ -59,11 +58,13 @@ class Object:
             ret = ret[:-2]
             ret += ")"
         elif type(val) == parser.value.VariableValue:
-            if val.name in self.data_fields:
+            if val.name in [x.name for x in self.data_fields]:
                 ret += f"obj.{val.name}"
-            elif val.name in self.derived_fields:
+            elif val.name in [x.name for x in self.derived_fields]:
                 #TODO: make it so that this uses a cached calculation, not recalculating for each hydration
                 ret += self.get_field_derivation_string(self.derived_fields[val.name])
+            else:
+                raise Exception(f"Unknown variable {val.name}")
         else:
             raise Exception(f"Unknown value type {type(val)}")
         
@@ -73,22 +74,22 @@ class Object:
         o.w(f"func Create{self.name}(obj {self.name}) ({self.name}Hydrated, error) {{")
         o.w(f"    ret_obj := hydrate{self.name}(obj)")
         query = f"INSERT INTO {self.name} ("
-        for field in self.data_fields.values():
+        for field in self.data_fields:
             query += f"{field.name},"
-        for field in self.derived_fields.values():
+        for field in self.derived_fields:
             query += f"{field.name},"
         query = query[:-1]
         query += ") VALUES ("
-        for i,field in enumerate(self.data_fields.values()):
+        for i,field in enumerate(self.data_fields):
             query+=f"${i+1},"
-        for i,field in enumerate(self.derived_fields.values()):
+        for i,field in enumerate(self.derived_fields):
             query+=f"${i+len(self.data_fields)+1},"
         query = query[:-1]
         query += ") RETURNING ID"
         o.w(f"    database.DB.QueryRow(context.Background(), \"{query}\",")
-        for field in self.data_fields.values():
+        for field in self.data_fields:
             o.w(f"        ret_obj.{field.name},")
-        for field in self.derived_fields.values():
+        for field in self.derived_fields:
             o.w(f"        ret_obj.{field.name},")
         o.w(f"    ).Scan(&ret_obj.ID)")
         o.w(f"    return ret_obj, nil")
@@ -99,9 +100,9 @@ class Object:
         o.w(f"func Read{self.name}(id string) ({self.name}Hydrated, error) {{")
         o.w(f"    var obj {self.name}Hydrated")
         o.w(f"    err := database.DB.QueryRow(context.Background(), \"SELECT * FROM {self.name} WHERE ID = $1\", id).Scan(")
-        for field in self.data_fields.values():
+        for field in self.data_fields:
             o.w(f"        &obj.{field.name},")
-        for field in self.derived_fields.values():
+        for field in self.derived_fields:
             o.w(f"        &obj.{field.name},")
         o.w(f"        &obj.ID,")
         o.w(f"    )")
@@ -130,9 +131,9 @@ class Object:
     def write_hydrate(self, o: Writer):
         o.w(f"func hydrate{self.name}(obj {self.name}) {self.name}Hydrated {{")
         o.w(f"    new_obj := {self.name}Hydrated{{}}")
-        for field in self.data_fields.values():
+        for field in self.data_fields:
             o.w(f"    new_obj.{field.name} = obj.{field.name}")
-        for field in self.derived_fields.values():
+        for field in self.derived_fields:
             o.w(f"    new_obj.{field.name} = "+self.get_field_derivation_string(field))
         o.w(f"    new_obj.ID = obj.ID")
         o.w(f"    return new_obj")
@@ -145,7 +146,7 @@ class Object:
         o.use_file(f"objects/{self.name}.go")
         o.w(f"package objects")
         o.w(f"")
-        non_constant_derived = [field for field in self.derived_fields.values() if type(field.derived.value) == parser.value.FunctionValue]
+        non_constant_derived = [field for field in self.derived_fields if type(field.derived.value) == parser.value.FunctionValue]
         o.w(f"import (")
         if len(non_constant_derived) > 0:
             o.w(f"    \"{o.package()}/derivers\"")
@@ -155,16 +156,16 @@ class Object:
         o.w(f"")
 
         o.w("type " + self.name + " struct {")
-        for field in self.data_fields.values():
+        for field in self.data_fields:
             o.w(f"    {field.name} {correct_type(field.t)}")
         o.w("    ID string")
         o.w("}")
         o.w("")
 
         o.w(f"type {self.name}Hydrated struct {{")
-        for field in self.data_fields.values():
+        for field in self.data_fields:
             o.w(f"    {field.name} {correct_type(field.t)}")
-        for field in self.derived_fields.values():
+        for field in self.derived_fields:
             o.w(f"    {field.name} {correct_type(field.t)}")
         o.w("    ID string")
         o.w("}")
@@ -181,9 +182,9 @@ class Object:
 
     def generate_schema(self, o: Writer):
         ret = f"CREATE TABLE {self.name} (\n"
-        for field in self.data_fields.values():
+        for field in self.data_fields:
             ret += f"    {field.name} {correct_type_sql(field.t)} NOT NULL,\n"
-        for field in self.derived_fields.values():
+        for field in self.derived_fields:
             ret += f"    {field.name} {correct_type_sql(field.t)} NOT NULL,\n"
         ret += "    ID SERIAL PRIMARY KEY\n"
         ret += ");"

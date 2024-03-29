@@ -107,7 +107,7 @@ class VariableValue:
 
 class Value:
     def __init__(self, value: Union[FunctionValue, DecimalValue, IntegerValue, StringValue, BoolValue, VariableValue], t: str):
-        self.value = value
+        self.value: Union[FunctionValue, DecimalValue, IntegerValue, StringValue, BoolValue, VariableValue] = value
         self.t = t
     def parse(reader: Reader, function_table: dict = {}, expected_type = "undefined"):
         reader.pop()
