@@ -27,11 +27,20 @@ def correct_type_sql(t: str):
     assert False, f"Unknown type {t}"
 
 class Object:
-    def __init__(self, parser_object: parser.program.Object):
+    def __init__(self, parser_object: parser.program.Object, program: parser.program.Program):
         self.name = parser_object.name
-        self.data_fields = {}
         self.derived_fields:List[parser.field.Field] = [x for x in parser_object.fields if x.derived]
         self.data_fields: List[parser.field.Field] = [x for x in parser_object.fields if not x.derived]
+        self.program = program
+
+    def object_derived_fields(self):
+        return [field for field in self.derived_fields if field.is_object_derived()]
+    
+    def foreign_derived_fields(self) -> List[parser.value.Value]:
+        ret = []
+        for field in self.object_derived_fields():
+            ret += field.derived.get_object_derived_values()
+        return ret
 
     def get_field_derivation_string(self,field: parser.field.Field) -> str:
         assert field.derived, f"Field {field.name} is not derived"
@@ -52,7 +61,7 @@ class Object:
         ret = ""
         val: parser.value.FunctionValue
         if type(val) == parser.value.FunctionValue:
-            ret += f"derivers.{val.name}("
+            ret += f"derived.{val.name}("
             for arg in val.args:
                 ret += self.get_value_derivation_string(arg) + ", "
             ret = ret[:-2]
@@ -129,8 +138,15 @@ class Object:
         o.w("")
 
     def write_hydrate(self, o: Writer):
-        o.w(f"func hydrate{self.name}(obj {self.name}) {self.name}Hydrated {{")
-        o.w(f"    new_obj := {self.name}Hydrated{{}}")
+        o.w(f"func hydrate{self.name}(obj {self.name}) ({self.name}Hydrated,error) {{")
+        o.w(f"    new_obj_hydrated := {self.name}Hydrated{{}}")
+        #query the db for the objects we need for hydration
+        o.w(f"    err := database.DB.QueryRow(context.Background(), \"SELECT * FROM {self.name} WHERE ID = $1 Limit 1\", obj.ID).Scan(")
+        for field in self.data_fields:
+            o.w(f"        &obj.{field.name},")
+        o.w(f"        &obj.ID)")
+        #TODO query the referenced fields so we can hydrate
+
         for field in self.data_fields:
             o.w(f"    new_obj.{field.name} = obj.{field.name}")
         for field in self.derived_fields:
@@ -149,7 +165,7 @@ class Object:
         non_constant_derived = [field for field in self.derived_fields if type(field.derived.value) == parser.value.FunctionValue]
         o.w(f"import (")
         if len(non_constant_derived) > 0:
-            o.w(f"    \"{o.package()}/derivers\"")
+            o.w(f"    \"{o.package()}/derived\"")
         o.w('    "context"')
         o.w(f'   "{o.package()}/database"')    
         o.w(f")")

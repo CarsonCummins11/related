@@ -37,6 +37,9 @@ class Program:
         self.objects:List[Object] = []
         self.function_table = function_table
 
+    def object_types(self):
+        return [o.name for o in self.objects]
+
     def parse(self):
         self.reader.reset()
         print("Parsing program:\n", self.src)

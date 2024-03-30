@@ -30,4 +30,4 @@ class Writer:
 
     def package(self):
         #returns the current parent go package being written to
-        return self.path.split("/")[0]
+        return self.path.split("/")[-1]

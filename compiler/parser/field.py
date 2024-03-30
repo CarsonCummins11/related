@@ -7,6 +7,12 @@ class Field:
         self.t = t
         self.derived = derived
 
+    def is_object_derived(self) -> bool:
+        if(self.derived):
+            if self.derived.value.is_object_derived():
+                return True
+        return False
+
     def resolve_type(self, parent, function_table, custom_types: list):
         possible_types = custom_types + PRIMITIVES
         if self.t == "undefined":
@@ -33,11 +39,11 @@ class Field:
             print(f"Field {self.name} is already of type {self.t}. Skipping type resolution")
 
     @staticmethod
-    def parse(reader: Reader, function_table: dict = {}, expected_type="undefined") -> "Field":
+    def parse(reader: Reader, parent_name: str, function_table: dict = {}, expected_type="undefined") -> "Field":
         name = reader.readuntil(":")
         print("Parsing field", name)
         #parse a value, if it's a variable value, we can check if that's actually a typedef later and if so, use it as a non-derived field with type
-        v = Value.parse(reader, function_table, expected_type)
+        v = Value.parse(reader,parent_name, function_table, expected_type)
         reader.pop()
         return Field(name, v.t, v)
     

@@ -4,7 +4,7 @@ from parser.reader import Reader, get_user_input
 from parser.config import PRIMITIVES
 
 
-def lookaheadValue(reader: Reader, function_table: dict = {}, expected_type = "undefined"):
+def lookaheadValue(reader: Reader, parent_name:str,  function_table: dict = {}, expected_type = "undefined"):
     saved_pos = reader.get_pos()
     res = reader.pop()
     while reader.peek().isalpha() or reader.peek().isdigit() or reader.peek() == "_":
@@ -13,15 +13,15 @@ def lookaheadValue(reader: Reader, function_table: dict = {}, expected_type = "u
     if reader.peek() == "(":
         print("parsing function from: "+res)
         reader.set_pos(saved_pos)
-        func = FunctionValue.parse(reader, function_table, expected_type)
-        return Value(func,func.t)
+        func = FunctionValue.parse(reader, parent_name, function_table, expected_type)
+        return Value(func,func.t, parent_name)
     elif res == "true" or res == "false":
-        return Value(BoolValue(res =="true"), "bool")
+        return Value(BoolValue(res =="true"), "bool", parent_name)
     else:
         print("attempting to parse variable from: "+res)
         reader.set_pos(saved_pos)
         vv = VariableValue.parse(reader)
-        return Value(vv, vv.t)
+        return Value(vv, vv.t, parent_name)
 class FunctionValue:
     def __init__(self, name: str, args: List["Value"], t: str):
         self.name = name
@@ -57,7 +57,7 @@ class FunctionValue:
             
         
     @staticmethod
-    def parse(reader: Reader, function_table: dict, expected_type = "undefined"):
+    def parse(reader: Reader, parent_name: str, function_table: dict, expected_type = "undefined"):
         print("parsing function")
         name = reader.readuntil("(")
         args = []
@@ -73,7 +73,7 @@ class FunctionValue:
                 assert reader.pop() == ",", "function arguments must be separated by commas."
             else:
                 onfirst = False
-            args.append(Value.parse(reader, function_table, exp_t))
+            args.append(Value.parse(reader, parent_name,function_table, exp_t))
         reader.pop()
         if name in function_table:
             return FunctionValue(name, args, function_table[name].t)
@@ -101,20 +101,40 @@ class VariableValue:
         self.t = t
     def parse(reader: Reader):
         name = ""
-        while reader.peek().isalpha() or reader.peek().isdigit() or reader.peek() == "_":
+        while reader.peek().isalpha() or reader.peek().isdigit() or reader.peek() == "_" or reader.peek() == ".":
             name += reader.pop()
         return VariableValue(name, "undefined")
 
 class Value:
-    def __init__(self, value: Union[FunctionValue, DecimalValue, IntegerValue, StringValue, BoolValue, VariableValue], t: str):
+    def __init__(self, value: Union[FunctionValue, DecimalValue, IntegerValue, StringValue, BoolValue, VariableValue], t: str, parent_name: str):
         self.value: Union[FunctionValue, DecimalValue, IntegerValue, StringValue, BoolValue, VariableValue] = value
         self.t = t
-    def parse(reader: Reader, function_table: dict = {}, expected_type = "undefined"):
+        self.parent_name = parent_name
+    
+    def is_object_derived(self) -> bool:
+        if type(self.value) == FunctionValue:
+            return self.value.t not in PRIMITIVES or any([arg.is_object_derived() for arg in self.value.args])
+        elif type(self.value) == VariableValue:
+            return self.value.t not in PRIMITIVES
+        return False
+    
+    def get_object_derived_values(self) -> List["Value"]:
+        if not self.is_object_derived():
+            return []
+        if type(self.value) == FunctionValue:
+            ret = []
+            for x in [arg for arg in self.value.args if arg.is_object_derived()]:
+                ret += x.get_object_derived_values()
+            return ret
+        elif type(self.value) == VariableValue:
+            return [self]
+
+    def parse(reader: Reader, parent_name:str, function_table: dict = {}, expected_type = "undefined"):
         reader.pop()
         reader.pos -=1
         if reader.peek() == "\"":
             reader.pop()
-            return Value(StringValue(reader.readuntil_with_whitespace("\"")),"string")
+            return Value(StringValue(reader.readuntil_with_whitespace("\"")),"string", parent_name)
         elif reader.peek().isdigit():
             result = ""
             while reader.peek().isdigit():
@@ -123,11 +143,11 @@ class Value:
                 result += reader.pop()
                 while reader.peek().isdigit():
                     result += reader.pop()
-                return Value(DecimalValue(float(result)),"float")
+                return Value(DecimalValue(float(result)),"float", parent_name)
             else:
-                return Value(IntegerValue(int(result)),"int")
+                return Value(IntegerValue(int(result)),"int", parent_name)
         else:
-            return lookaheadValue(reader, function_table, expected_type)
+            return lookaheadValue(reader, parent_name, function_table, expected_type)
         
     def construct_type(self, parent, function_table: dict, custom_types: list):
         poss_types = PRIMITIVES + custom_types
