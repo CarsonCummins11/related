@@ -22,7 +22,7 @@ class Object:
         print("Parsing object", name)
         fields = []
         while reader.peek_pop_result() not in ["}",""]:
-            fields.append(Field.parse(reader, function_table))
+            fields.append(Field.parse(reader, name, function_table))
         try:
             reader.pop()
         except:
@@ -39,6 +39,12 @@ class Program:
 
     def object_types(self):
         return [o.name for o in self.objects]
+    
+    def get_object(self, name: str) -> Object:
+        for o in self.objects:
+            if o.name == name:
+                return o
+        assert False, f"Object {name} not found"
 
     def parse(self):
         self.reader.reset()
@@ -66,4 +72,4 @@ class Program:
         custom_types = [o.name for o in self.objects]
         for o in self.objects:
             for f in o.fields:
-                f.resolve_type(o, self.function_table, custom_types)
+                f.resolve_type(o, self.function_table, custom_types, self)

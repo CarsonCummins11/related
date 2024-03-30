@@ -8,12 +8,10 @@ class Field:
         self.derived = derived
 
     def is_object_derived(self) -> bool:
-        if(self.derived):
-            if self.derived.value.is_object_derived():
-                return True
-        return False
+        return self.derived and self.derived.is_object_derived()
 
-    def resolve_type(self, parent, function_table, custom_types: list):
+    def resolve_type(self, parent, function_table, custom_types: list, program):
+        print("resolving type for field", self.name)
         possible_types = custom_types + PRIMITIVES
         if self.t == "undefined":
             assert self.derived, f"Field {self.name} has no type and is not derived from another field."
@@ -23,7 +21,7 @@ class Field:
                 print(f"Field {self.name} is now of type {self.t}, derived from {self.derived.t}")
             else:
                 print(f"Field {self.name} is derived from another field, but that field has no type. Attempting to resolve type.")
-                self.derived.construct_type(parent, function_table, custom_types)
+                self.derived.construct_type(parent, function_table, custom_types, program)
                 self.t = self.derived.t
                 if type(self.derived.value) == VariableValue:
                     if self.derived.value.name in possible_types:
@@ -32,9 +30,9 @@ class Field:
                         self.derived = None
                 else:
                     print(f"Field {self.name} is now of type {self.t}, derived from {self.derived.t}")
-        elif type(self.derived.value) == FunctionValue:
+        elif self.derived and type(self.derived.value) == FunctionValue:
             print(f"Field {self.name} is derived from a function. Constructing types.")
-            self.derived.construct_type(parent, function_table, custom_types)
+            self.derived.construct_type(parent, function_table, custom_types, program)
         else:
             print(f"Field {self.name} is already of type {self.t}. Skipping type resolution")
 

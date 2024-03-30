@@ -27,7 +27,7 @@ class FunctionValue:
         self.name = name
         self.args = args
         self.t = t
-    def construct_types(self, parent, function_table: dict, custom_types: list):
+    def construct_types(self, parent, function_table: dict, custom_types: list, program):
         print("\n\n\n\n\n\nconstructing types for function "+self.name)
         if self.name in function_table:
             print("Function "+self.name+" already exists in function table. Getting type information.")
@@ -38,7 +38,7 @@ class FunctionValue:
             assert self.t != "undefined", f"Function {self.name} has no type information."
         for arg in self.args:
             if arg.t == "undefined":
-                arg.construct_type(parent, function_table, custom_types)
+                arg.construct_type(parent, function_table, custom_types, program)
         
         i = 0
         for arg, argt in zip(self.args, function_table[self.name].arg_types):
@@ -113,9 +113,9 @@ class Value:
     
     def is_object_derived(self) -> bool:
         if type(self.value) == FunctionValue:
-            return self.value.t not in PRIMITIVES or any([arg.is_object_derived() for arg in self.value.args])
+            return any([arg.is_object_derived() for arg in self.value.args])
         elif type(self.value) == VariableValue:
-            return self.value.t not in PRIMITIVES
+            return self.value.t not in PRIMITIVES or "." in self.value.name
         return False
     
     def get_object_derived_values(self) -> List["Value"]:
@@ -149,10 +149,10 @@ class Value:
         else:
             return lookaheadValue(reader, parent_name, function_table, expected_type)
         
-    def construct_type(self, parent, function_table: dict, custom_types: list):
+    def construct_type(self, parent, function_table: dict, custom_types: list, program):
         poss_types = PRIMITIVES + custom_types
         if type(self.value) == FunctionValue:
-                self.value.construct_types(parent, function_table, custom_types)
+                self.value.construct_types(parent, function_table, custom_types, program)
                 assert self.value.t != "undefined", f"Function {self.value.name} has no type information."
                 self.t = self.value.t
         elif self.t == "undefined":
@@ -160,7 +160,47 @@ class Value:
                 if self.value.name in poss_types:
                     self.t = self.value.name
                 else:
+                    print(f"{self.value.name} not found in {poss_types}. Looking for field by that name in parent object.")
                     poss_variables = [f.name for f in parent.fields]
+
+                    if("." in self.value.name):
+                        obj_name, field_name = self.value.name.split(".")
+
+                        if obj_name in poss_variables:
+                            obj_field = [f for f in parent.fields if f.name == obj_name]
+                            if obj_field:
+                                obj_field = obj_field[0]
+                            else:
+                                raise Exception(f"Field {obj_name} not found.")
+                            
+                            if obj_field.t == "undefined":
+                                obj_field.resolve_type(parent, function_table, custom_types)
+                            assert obj_field.t != "undefined", f"Object {obj_name} has no type information."
+                            if obj_field.t in PRIMITIVES:
+                                raise Exception(f"Only objects can have fields. {obj_name} is a primitive type.")
+                            obj = [o for o in program.objects if o.name == obj_field.t]
+                            if obj:
+                                obj = obj[0]
+                            else:
+                                raise Exception(f"Object type {obj_name} not found.")
+                            
+
+
+                            fnames = {f.name:f for f in obj.fields}
+                            if field_name in fnames:
+                                field = [f for f in obj.fields if f.name == field_name][0]
+                                if field.t == "undefined":
+                                    field.resolve_type(parent, function_table, custom_types, program)
+                                assert field.t != "undefined", f"Field {field_name} has no type information."
+                                self.t = field.t
+                                self.parent_name = obj.name
+                                return
+                            else:
+                                raise Exception(f"Field {field_name} not found in object {obj_name}.")
+                        else:
+                            raise Exception(f"Field {obj_name} not found.")
+                        
+                    
                     if self.value.name in poss_variables:
                         var_field = parent.fields[poss_variables.index(self.value.name)]
                         if var_field.t == "undefined":

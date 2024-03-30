@@ -3,7 +3,7 @@ import parser.field
 import parser.value
 from parser.config import PRIMITIVES
 from generator.writer import Writer
-from typing import List
+from typing import List, Dict
 
 def correct_type(t: str):
         if t == "float":
@@ -36,11 +36,33 @@ class Object:
     def object_derived_fields(self):
         return [field for field in self.derived_fields if field.is_object_derived()]
     
-    def foreign_derived_fields(self) -> List[parser.value.Value]:
-        ret = []
+    '''
+        returns a list of object names, and the fields that are derived from them
+    '''
+    def foreign_derived_fields(self) -> Dict[str, List[parser.field.Field]]:
+        vs: List[parser.value.Value] = []
         for field in self.object_derived_fields():
-            ret += field.derived.get_object_derived_values()
-        return ret
+            vs += field.derived.get_object_derived_values()
+        #get field associated with each value
+        ret = {}
+        for v in vs:
+            #every v will be variable value, either type object or object.field
+            if v.t in PRIMITIVES:
+                assert "." in v.name, f"Variable value {v.name} is not a field reference"
+                objname, fieldname = v.name.split(".")
+                obj = self.program.get_object(objname)
+                field = ([x for x in obj.derived_fields if x.name == fieldname] + [x for x in obj.data_fields if x.name == fieldname])[0]
+                if objname not in ret:
+                    ret[objname] = []
+                ret[objname].append(field)
+            else:
+                obj = self.program.get_object(v.t)
+                if v.t not in ret:
+                    ret[v.t] = []
+                ret[v.t]+= obj.fields
+
+            
+            
 
     def get_field_derivation_string(self,field: parser.field.Field) -> str:
         assert field.derived, f"Field {field.name} is not derived"
@@ -59,7 +81,6 @@ class Object:
         
         assert type(val) in [parser.value.FunctionValue, parser.value.VariableValue], f"Unknown value type {type(val)}"
         ret = ""
-        val: parser.value.FunctionValue
         if type(val) == parser.value.FunctionValue:
             ret += f"derived.{val.name}("
             for arg in val.args:
@@ -70,10 +91,14 @@ class Object:
             if val.name in [x.name for x in self.data_fields]:
                 ret += f"obj.{val.name}"
             elif val.name in [x.name for x in self.derived_fields]:
-                #TODO: make it so that this uses a cached calculation, not recalculating for each hydration
-                ret += self.get_field_derivation_string(self.derived_fields[val.name])
+                #TODO: make it so that this can use a cached calculation, not recalculating for each hydration
+                ret += self.get_field_derivation_string(val) + ","
+            elif "." in val.name:
+                #this is a reference to another object
+                #we've already written the query to store the reference in "retr_<valname>"
+                ret+= f"retr_{val.name.replace('.','_')},"
             else:
-                raise Exception(f"Unknown variable {val.name}")
+                assert False, f"Unknown variable {val.name}"
         else:
             raise Exception(f"Unknown value type {type(val)}")
         
@@ -139,8 +164,12 @@ class Object:
 
     def write_hydrate(self, o: Writer):
         o.w(f"func hydrate{self.name}(obj {self.name}) ({self.name}Hydrated,error) {{")
-        o.w(f"    new_obj_hydrated := {self.name}Hydrated{{}}")
-        #query the db for the objects we need for hydration
+        o.w(f"    new_obj := {self.name}Hydrated{{}}")
+        #query the db for the info we need for hydration
+        needed_fields = {}
+        for field in self.object_derived_fields():
+            needed_fields[field.derived.parent_name] = field.name
+        
         o.w(f"    err := database.DB.QueryRow(context.Background(), \"SELECT * FROM {self.name} WHERE ID = $1 Limit 1\", obj.ID).Scan(")
         for field in self.data_fields:
             o.w(f"        &obj.{field.name},")

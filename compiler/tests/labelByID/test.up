@@ -1,0 +1,11 @@
+Usr {
+    Name: string;
+    Item: Itm;
+    DoubleValue: Times2(Item.Value);
+}
+
+Itm {
+    Name: string;
+    Value: int;
+    DoubleValue: Times2(Value);
+}
