@@ -1,6 +1,6 @@
 from parser.value import Value, VariableValue, FunctionValue
 from parser.config import PRIMITIVES
-from parser.reader import Reader
+from compiler.io.reader import Reader
 class Field:
     def __init__(self, name: str, t: str, derived: Value = None):
         self.name = name
@@ -8,7 +8,7 @@ class Field:
         self.derived = derived
 
     def is_object_derived(self) -> bool:
-        return self.derived and self.derived.is_object_derived()
+        return self.t not in PRIMITIVES or (self.derived and self.derived.is_object_derived())
 
     def resolve_type(self, parent, function_table, custom_types: list, program):
         print("resolving type for field", self.name)

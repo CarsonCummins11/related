@@ -1,4 +1,4 @@
-from parser.reader import Reader
+from compiler.io.reader import Reader
 from parser.field import Field
 from typing import List
 from parser.value import VariableValue, FunctionValue
@@ -16,6 +16,11 @@ class Object:
             assert f.name not in PRIMITIVES, f"Field name {f.name} is a primitive type"
             assert f.name not in SQL_KEYWORDS, f"Field name {f.name} is a SQL keyword"
             assert f.name[0].isupper(), f"Field name {f.name} must start with a capital letter"
+
+    def type_of(self, obj_name: str):
+        for f in self.fields:
+            if f.name == obj_name:
+                return f.t
     @staticmethod
     def parse(reader: Reader, function_table) -> "Object":
         name = reader.readuntil("{")

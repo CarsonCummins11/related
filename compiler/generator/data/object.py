@@ -3,7 +3,7 @@ import parser.field
 import parser.value
 from parser.config import PRIMITIVES
 from generator.writer import Writer
-from typing import List, Dict
+from typing import List, Dict, Set, Tuple
 
 def correct_type(t: str):
         if t == "float":
@@ -26,6 +26,46 @@ def correct_type_sql(t: str):
 
     assert False, f"Unknown type {t}"
 
+def make_field_name(obj:parser.program.Object,v: parser.value.Value) -> str:
+    fieldname = v.name
+    objname = v.t+"."
+    if "." in v.name:
+        objname, fieldname = v.name.split(".")
+        objname = obj.type_of(objname)+"."
+    return objname+fieldname
+
+def make_sql_query(obj: parser.program.Object, fields: List[parser.program.Field] = []) -> Tuple[str, List[str]]:
+    if not fields:
+        fields = obj.fields
+    table_columns: Dict[str, (str,Set[str])] = {}
+    for field in fields:
+        if field.is_object_derived():
+            for v in field.derived.get_object_derived_values():
+                objname = v.t
+                fieldname = v.name
+                if "." in v.name:
+                    objname, fieldname = v.name.split(".")
+                    objname = obj.type_of(objname)
+                joinstr = f"INNER JOIN {objname} ON {obj.name}.{objname} = {objname}.ID"
+                if objname not in table_columns:
+                    table_columns[objname] = (joinstr,set())
+                table_columns[objname][1].add(fieldname)
+    ret = "SELECT "
+    needed_tables = table_columns.keys()
+    selected_fields = []
+    for f in needed_tables:
+        for field in table_columns[f][1]:
+            ret += f"{f}.{field}, "
+            selected_fields.append(f"retr_{f}_{field}")
+    ret = ret[:-2]
+    ret += f" FROM {obj.name} "
+    for f in needed_tables:
+        ret += table_columns[f][0]
+    
+    return ret, selected_fields
+
+
+
 class Object:
     def __init__(self, parser_object: parser.program.Object, program: parser.program.Program):
         self.name = parser_object.name
@@ -35,33 +75,6 @@ class Object:
 
     def object_derived_fields(self):
         return [field for field in self.derived_fields if field.is_object_derived()]
-    
-    '''
-        returns a list of object names, and the fields that are derived from them
-    '''
-    def foreign_derived_fields(self) -> Dict[str, List[parser.field.Field]]:
-        vs: List[parser.value.Value] = []
-        for field in self.object_derived_fields():
-            vs += field.derived.get_object_derived_values()
-        #get field associated with each value
-        ret = {}
-        for v in vs:
-            #every v will be variable value, either type object or object.field
-            if v.t in PRIMITIVES:
-                assert "." in v.name, f"Variable value {v.name} is not a field reference"
-                objname, fieldname = v.name.split(".")
-                obj = self.program.get_object(objname)
-                field = ([x for x in obj.derived_fields if x.name == fieldname] + [x for x in obj.data_fields if x.name == fieldname])[0]
-                if objname not in ret:
-                    ret[objname] = []
-                ret[objname].append(field)
-            else:
-                obj = self.program.get_object(v.t)
-                if v.t not in ret:
-                    ret[v.t] = []
-                ret[v.t]+= obj.fields
-
-            
             
 
     def get_field_derivation_string(self,field: parser.field.Field) -> str:
@@ -106,7 +119,10 @@ class Object:
 
     def write_create(self, o: Writer):
         o.w(f"func Create{self.name}(obj {self.name}) ({self.name}Hydrated, error) {{")
-        o.w(f"    ret_obj := hydrate{self.name}(obj)")
+        o.w(f"    ret_obj,err := hydrate{self.name}(obj)")
+        o.w(f"    if err != nil {{")
+        o.w(f"        return {self.name}Hydrated{{}}, err")
+        o.w(f"    }}")
         query = f"INSERT INTO {self.name} ("
         for field in self.data_fields:
             query += f"{field.name},"
@@ -116,14 +132,10 @@ class Object:
         query += ") VALUES ("
         for i,field in enumerate(self.data_fields):
             query+=f"${i+1},"
-        for i,field in enumerate(self.derived_fields):
-            query+=f"${i+len(self.data_fields)+1},"
         query = query[:-1]
         query += ") RETURNING ID"
         o.w(f"    database.DB.QueryRow(context.Background(), \"{query}\",")
         for field in self.data_fields:
-            o.w(f"        ret_obj.{field.name},")
-        for field in self.derived_fields:
             o.w(f"        ret_obj.{field.name},")
         o.w(f"    ).Scan(&ret_obj.ID)")
         o.w(f"    return ret_obj, nil")
@@ -132,16 +144,17 @@ class Object:
 
     def write_read(self, o: Writer):
         o.w(f"func Read{self.name}(id string) ({self.name}Hydrated, error) {{")
-        o.w(f"    var obj {self.name}Hydrated")
+        o.w(f"    var obj {self.name}")
         o.w(f"    err := database.DB.QueryRow(context.Background(), \"SELECT * FROM {self.name} WHERE ID = $1\", id).Scan(")
         for field in self.data_fields:
-            o.w(f"        &obj.{field.name},")
-        for field in self.derived_fields:
             o.w(f"        &obj.{field.name},")
         o.w(f"        &obj.ID,")
         o.w(f"    )")
         o.w(f"    if err != nil {{")
-        
+        o.w(f"        return {self.name}Hydrated{{}}, err")
+        o.w(f"    }}")
+        o.w(f"    ret_obj,err := hydrate{self.name}(obj)")
+        o.w(f"    if err != nil {{")
         o.w(f"        return {self.name}Hydrated{{}}, err")
         o.w(f"    }}")
         o.w(f"    return obj, nil")
@@ -150,6 +163,20 @@ class Object:
     
     def write_update(self, o: Writer):
         o.w(f"func Update{self.name}(obj {self.name}) ({self.name}Hydrated, error) {{")
+        update_query = f"    err:= database.DB.QueryRow(context.Background(), \"UPDATE {self.name} SET "
+        ind = 1
+        for field in self.data_fields:
+            update_query+=f"{field.name} = ${ind},"
+            ind+=1
+        update_query = update_query[:-1]
+        update_query += " WHERE ID = $"+str(ind)+"\","
+        for field in self.data_fields:
+            update_query+=f"obj.{field.name},"
+        update_query+=f"obj.ID)"
+        o.w(update_query)
+        o.w(f"    if err != nil {{")
+        o.w(f"        return {self.name}Hydrated{{}}, err")
+        o.w(f"    }}")
         o.w(f"    ret_obj := hydrate{self.name}(obj)")
         o.w(f"    return ret_obj, nil")
         o.w("}")
@@ -166,16 +193,10 @@ class Object:
         o.w(f"func hydrate{self.name}(obj {self.name}) ({self.name}Hydrated,error) {{")
         o.w(f"    new_obj := {self.name}Hydrated{{}}")
         #query the db for the info we need for hydration
-        needed_fields = {}
-        for field in self.object_derived_fields():
-            needed_fields[field.derived.parent_name] = field.name
-        
-        o.w(f"    err := database.DB.QueryRow(context.Background(), \"SELECT * FROM {self.name} WHERE ID = $1 Limit 1\", obj.ID).Scan(")
-        for field in self.data_fields:
-            o.w(f"        &obj.{field.name},")
-        o.w(f"        &obj.ID)")
-        #TODO query the referenced fields so we can hydrate
-
+        q, selected_fields = make_sql_query(self, self.data_fields+self.derived_fields)
+        query = f"err := database.DB.Query(context.Background(), \"{q} WHERE {self.name}.ID = $1\", obj.ID).Scan("
+        for field in selected_fields:
+            query += f"&retr_.{field},"
         for field in self.data_fields:
             o.w(f"    new_obj.{field.name} = obj.{field.name}")
         for field in self.derived_fields:

@@ -1,6 +1,6 @@
 Usr {
-    Name: string;
-    Item: Itm;
+    Name: @string;
+    Item: @Itm;
     Tr: true;
     S: "a string here";
     N: 55;
@@ -8,7 +8,7 @@ Usr {
 }
 
 Itm {
-    Name: string;
-    Value: int;
+    Name: @string;
+    Value: @int;
     DoubleValue: Times2(Value);
 }

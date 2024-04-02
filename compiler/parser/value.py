@@ -1,6 +1,6 @@
 from typing import List, Union
 from parser.function import Function
-from parser.reader import Reader, get_user_input
+from compiler.io.reader import Reader, get_user_input
 from parser.config import PRIMITIVES
 
 
