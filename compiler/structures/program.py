@@ -1,9 +1,9 @@
 # a program is a list of objects and a list of functions
 from typing import List, Tuple
-from compiler.io.reader import Reader
-from compiler.structures.function import Function
-from compiler.structures.object import Object
-from compiler.structures.expression import VariableExpression
+from iostuff.reader import Reader
+from structures.function import Function
+from structures.object import Object
+from structures.expression import VariableExpression
 
 PRIMITIVES = ["int", "float", "bool", "string"]
 
@@ -81,6 +81,15 @@ class Program:
     def add_object(self, obj: Object):
         self.objects.append(obj)
     
+
+    def __str__(self) -> str:
+        ret = ""
+        for obj in self.objects:
+            ret += f"{obj}\n\n"
+
+        return ret
+
+
     @staticmethod
     def parse(src: str, functions: List[Function]) -> 'Program':
         reader = Reader(src)

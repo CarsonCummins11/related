@@ -1,8 +1,11 @@
 # a field can be stored or derived
 # a stored field is written as <name>: @<type>
 # a derived field is written as <name>: <expression>
-from compiler.io.reader import Reader
-from compiler.structures.program import Program
+from iostuff.reader import Reader
+from structures.expression import Expression
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from structures.program import Program
 
 class Field:
     def __init__(self, name: str, parent_name:str, t: str):
@@ -11,8 +14,9 @@ class Field:
         self.t = t
     
     @staticmethod
-    def parse(reader: Reader, object_name: str, context: Program) -> "Field":
+    def parse(reader: Reader, object_name: str, context: "Program") -> "Field":
         name = reader.read_while_matching("[a-zA-Z0-9_]")
+        print(f"parsing field {name} in object {object_name}")
         assert name != "", "Field name cannot be empty"
         assert name[0].isalpha(), f"Field name {name} must start with a letter while parsing object {object_name}"
         reader.pop_whitespace()
@@ -34,6 +38,9 @@ class StoredField(Field):
     def __init__(self, name: str, object_name: str, t: str):
         super().__init__(name, object_name, t)
 
+    def __str__(self):
+        return f"{self.name}: stored value of type {self.t}"
+
 class DerivedField(Field):
     
     def __init__(self, name: str, object_name: str, t: str, expression: Expression):
@@ -44,8 +51,12 @@ class DerivedField(Field):
     does NOT parse the name of the derived field, use Field.parse for that
     '''
     @staticmethod
-    def parse(reader: Reader, object_name: str, field_name: str, context: Program) -> "DerivedField":
+    def parse(reader: Reader, object_name: str, field_name: str, context: "Program") -> "DerivedField":
         expression = Expression.parse(reader, object_name, field_name, context)
+        reader.pop_whitespace()
+        assert reader.pop() == ";", "Expected ;"
         return DerivedField(field_name, object_name, expression.t, expression)
 
+    def __str__(self):
+        return f"{self.name}: {self.expression}"
 

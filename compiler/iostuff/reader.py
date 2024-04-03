@@ -25,6 +25,8 @@ class Reader:
         return self.pos < len(self.src)
     
     def peek(self):
+        if self.pos >= len(self.src):
+            return None
         return self.src[self.pos]
 
     def set_pos(self, pos: int):

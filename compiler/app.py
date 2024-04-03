@@ -1,19 +1,18 @@
-from parser.program import Program
-from generator.writer import Writer
-from generator.api.api import API
-from generator.data.data_platform import DataPlatform
-from parser.function import Function
 import subprocess
 import sys
-import os
+from typing import List
 
-def gather_function_table(path: str = "derived"):
+
+from structures.program import Program
+from structures.function import Function
+
+def gather_function_table(path: str = "derived") -> List[Function]:
     #to gather the funcs + types on local package derived, use:
     #go doc -short compiler/derived | grep "^[ ]*func "
     proc = subprocess.Popen(f"go doc -C {path} -short derived | grep '^[ ]*func ' ",shell=True, stdout=subprocess.PIPE)
     functypes = [x.decode().replace("\n","") for x in proc.stdout.readlines()]
     print(functypes)
-    function_table = {}
+    function_table = []
     for ft in functypes:
         if not ft:
             continue
@@ -28,29 +27,19 @@ def gather_function_table(path: str = "derived"):
         argtypes = [x.split(" ")[1] for x in argstrings]
         argnames = [x.split(" ")[0] for x in argstrings]
 
-        src = "\n".join([x.decode() for x in subprocess.Popen(f"go doc -C {path} -short -src derived.{fname}",shell=True, stdout=subprocess.PIPE).stdout.readlines()][1:-1])
-        function_table[fname] = Function(fname, argtypes, freturn, True,src, argnames)
-        print(function_table[fname].arg_types)
+        src = "\n".join([x.decode() for x in subprocess.Popen(f"go doc -C {path} -short -src derived.{fname}",shell=True, stdout=subprocess.PIPE).stdout.readlines()])
+        function_table.append(Function(fname, freturn, argtypes))
+        print(f"function {fname} with return {freturn} and args {argtypes} and src: \n{src}")
     return function_table
 
-def run(src: str, trg: str):
+def run(pth: str, trg: str):
     derived_loc = "derived"
-    if len(src.split("/")) > 1:
-        derived_loc = "/".join(src.split("/")[:-1]) + "/derived"
+    if len(pth.split("/")) > 1:
+        derived_loc = "/".join(pth.split("/")[:-1]) + "/derived"
     print("expecting derived located at ", derived_loc)
-    p = Program(open(src).read(), gather_function_table(derived_loc))
-    p.parse()
-    api = API(trg.split("/")[-1], p.objects)
-    w = Writer(trg)
-    api.generate(w)
-    data = DataPlatform(p)
-    data.generate(w)
-    os.system(f"cp -r {'/'.join(src.split('/')[:-1])}/derived {trg}/derived")
-    w.flush()
-    
-    unimplemented_functions = [f.name for f in p.function_table.values() if not f.available]
-    print(f"Unimplemented functions: {unimplemented_functions}")
-    assert len(unimplemented_functions) == 0, "Unimplemented functions found"
+    src = open(pth).read()
+    p = Program.parse(src, gather_function_table(derived_loc))
+    print(p)
 
 
 

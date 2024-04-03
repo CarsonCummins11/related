@@ -1,8 +1,10 @@
 #an object is a named list of fields
 from typing import List
-from compiler.io.reader import Reader
-from compiler.structures.program import Program
-from compiler.structures.field import Field
+from iostuff.reader import Reader
+from structures.field import Field
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from structures.program import Program
 
 class Object:
     def __init__(self, name:str, fields: List[Field]):
@@ -20,6 +22,13 @@ class Object:
             if field.name == name:
                 return True
         return False
+    
+    def __str__(self):
+        ret = f"{self.name}:\n"
+        for field in self.fields:
+            ret += f"    {field}\n"
+
+        return ret
 
     @staticmethod
     def parse(reader: Reader, context: "Program") -> "Object":
@@ -34,3 +43,7 @@ class Object:
         while reader.peek() != "}":
             fields.append(Field.parse(reader, name, context))
             reader.pop_whitespace()
+        assert reader.pop() == "}", "Expected }"
+        reader.pop_whitespace()
+
+        return Object(name, fields)
