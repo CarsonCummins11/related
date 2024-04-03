@@ -1,6 +1,6 @@
 import parser.program
 from generator.api.object import Object
-from generator.writer import Writer
+from compiler.iostuff.writer import Writer
 from typing import List
 import os
 class API:

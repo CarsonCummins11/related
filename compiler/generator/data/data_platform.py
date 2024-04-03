@@ -1,5 +1,5 @@
 import parser.program
-from generator.writer import Writer
+from compiler.iostuff.writer import Writer
 from typing import List
 from generator.data.object import Object
 

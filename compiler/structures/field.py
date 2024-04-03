@@ -13,6 +13,11 @@ class Field:
         self.parent_name = parent_name
         self.t = t
     
+    def is_derived(self) -> bool:
+        if type(self) == DerivedField:
+            return True
+        return False
+
     @staticmethod
     def parse(reader: Reader, object_name: str, context: "Program") -> "Field":
         name = reader.read_while_matching("[a-zA-Z0-9_]")

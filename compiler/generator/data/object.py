@@ -2,7 +2,7 @@ import parser.program
 import parser.field
 import parser.value
 from parser.config import PRIMITIVES
-from generator.writer import Writer
+from compiler.iostuff.writer import Writer
 from typing import List, Dict, Set, Tuple
 
 def correct_type(t: str):

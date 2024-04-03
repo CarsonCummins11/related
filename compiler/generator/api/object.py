@@ -2,7 +2,7 @@
 # and provides db backed CRUD operations on them
 # and provides read options for derived fields
 import parser.program
-from generator.writer import Writer
+from compiler.iostuff.writer import Writer
 
 class Object:
     def __init__(self, parser_object: parser.program.Object):
