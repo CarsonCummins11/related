@@ -14,7 +14,7 @@ class Writer:
     def use_file(self, file_name: str):
         self.current_file = file_name
 
-    def w(self, s: str, endl: bool = True):
+    def w(self, s: str = "", endl: bool = True):
         term = "\n" if endl else ""
         if self.current_file not in self.buffer:
             self.buffer[self.current_file] = ""

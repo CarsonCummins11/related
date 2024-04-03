@@ -10,7 +10,7 @@ class Router:
     def add_route(self, route: Route):
         self.routes.append(route)
 
-    def generate_go(self, o: Writer) -> str:
+    def generate(self, o: Writer) -> str:
         o.w("router := gin.Default()")
         o.w()
         for obj, routes in self.routes.items():
@@ -27,7 +27,7 @@ class Router:
     
     @staticmethod
     def for_program(program: Program) -> 'Router':
-        routes = []
+        routes = {}
         for obj in program.objects:
 
             if not obj.name in routes:

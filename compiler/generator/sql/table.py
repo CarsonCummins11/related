@@ -7,12 +7,12 @@ from iostuff.writer import Writer
 class Table:
     def __init__(self, name: str, fields: List[Field]):
         self.name = name
-        self.fields = fields
+        self.fields = [field for field in fields if not field.is_derived()]
 
     def generate(self, o: Writer):
         o.w(f'CREATE TABLE {self.name} (')
         for field in self.fields:
-            o.w(f'    {field.name} {field.type},')
+            o.w(f'    {field.name} {field.t},')
         o.w(f'    ID SERIAL PRIMARY KEY')
         o.w(');')
 

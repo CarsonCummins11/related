@@ -6,8 +6,7 @@ from generator.sql.table import Table
 
 
 class Schema:
-    def __init__(self, name: str, tables: List[Table]):
-        self.name = name
+    def __init__(self, tables: List[Table]):
         self.tables = tables
 
     def generate(self, o: Writer):
@@ -18,4 +17,6 @@ class Schema:
 
     @staticmethod
     def for_program(program: Program) -> 'Schema':
-        return Schema(program.objects)
+        return Schema([
+            Table.for_object(obj) for obj in program.objects
+        ])

@@ -2,9 +2,10 @@ import subprocess
 import sys
 from typing import List
 
-
+from iostuff.writer import Writer
 from structures.program import Program
 from structures.function import Function
+import generator.API
 
 def gather_function_table(path: str = "derived") -> List[Function]:
     #to gather the funcs + types on local package derived, use:
@@ -40,6 +41,10 @@ def run(pth: str, trg: str):
     src = open(pth).read()
     p = Program.parse(src, gather_function_table(derived_loc))
     print(p)
+
+    writer = Writer(trg)
+    generator.API.create_for(p, writer)
+
 
 
 

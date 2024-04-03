@@ -2,6 +2,7 @@ from typing import List
 
 from iostuff.writer import Writer
 from structures.field import Field
+from structures.object import Object
 
 class Struct:
     def __init__(self, name: str, fields: List[Field]):
@@ -33,6 +34,10 @@ class Struct:
     
     def stored_fields(self):
         return [field for field in self.fields if not field.is_derived()]
+    
+    @staticmethod
+    def for_object(obj: Object) -> 'Struct':
+        return Struct(obj.name, obj.fields)
 
 
 class StructCreator:
