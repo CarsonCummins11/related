@@ -83,7 +83,7 @@ class StructCreator:
         self.s = s
 
     def generate(self, o: Writer):
-        o.w(f'func (obj {self.s.name}) Create ({self.s.name}Hydrated, error) {{')
+        o.w(f'func (obj {self.s.name}) Create() ({self.s.name}Hydrated, error) {{')
         o.w(f'    _, err := DB.Exec(context.TODO(),"INSERT INTO {self.s.name} ({", ".join({field.name for field in self.s.stored_fields()})}) VALUES ({", ".join({f"?" for _ in self.s.stored_fields()})})", {", ".join({f"obj.{field.name}" for field in self.s.stored_fields()})})')
         o.w(f'    return obj.Hydrate(), err')
         o.w('}')
@@ -98,8 +98,8 @@ class StructUpdater:
         self.s = s
 
     def generate(self, o: Writer):
-        o.w(f'func (obj {self.s.name}) Update ({self.s.name}Hydrated,error) {{')
-        o.w(f'    _, err := DB.Exec(context.TODO(),"UPDATE {self.s.name} SET {", ".join({f"{field.name} = ?" for field in self.s.stored_fields() })} WHERE ID = ?", {", ".join({f"obj.{field.name}" for field in self.s.stored_fields()})}, obj.ID)')
+        o.w(f'func (obj {self.s.name}) Update(id string) ({self.s.name}Hydrated,error) {{')
+        o.w(f'    _, err := DB.Exec(context.TODO(),"UPDATE {self.s.name} SET {", ".join({f"{field.name} = ?" for field in self.s.stored_fields() })} WHERE ID = ?", {", ".join({f"obj.{field.name}" for field in self.s.stored_fields()})}, id)')
         o.w(f'    return obj.Hydrate(), err')
         o.w('}')
         o.w()
@@ -113,7 +113,7 @@ class StructReader:
         self.s = s
 
     def generate(self, o: Writer):
-        o.w(f'func Read{self.s.name}(id int) ({self.s.name}Hydrated, error) {{')
+        o.w(f'func Read{self.s.name}(id string) ({self.s.name}Hydrated, error) {{')
         o.w(f'    var obj {self.s.name}')
         o.w(f'    err := DB.QueryRow(context.TODO(),"SELECT {", ".join({field.name for field in self.s.stored_fields()})}, FROM {self.s.name} WHERE ID = ?", id).Scan({", ".join({f"&obj.{field.name}" for field in self.s.stored_fields()})})')
         o.w(f'    return obj.Hydrate(), err')
@@ -129,7 +129,7 @@ class StructDeleter:
         self.s = s
 
     def generate(self, o: Writer):
-        o.w(f'func Delete{self.s.name}(id int) error {{')
+        o.w(f'func Delete{self.s.name}(id string) error {{')
         o.w(f'    _, err := DB.Exec(context.TODO(),"DELETE FROM {self.s.name} WHERE ID = ?", id)')
         o.w(f'    return err')
         o.w('}')

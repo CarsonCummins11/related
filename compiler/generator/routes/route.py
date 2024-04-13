@@ -79,12 +79,12 @@ class DeleteRoute(Route):
     def generate(self, o: Writer):
         o.w(f'func {self.handler}(c *gin.Context) {{')
         o.w(f'    id := c.Param("id")')
-        o.w(f'    obj, err := models.Delete{self.obj.name}(id)')
+        o.w(f'    err := models.Delete{self.obj.name}(id)')
         o.w(f'    if err != nil {{')
         o.w(f'        c.JSON(500, err)')
         o.w(f'        return')
         o.w(f'    }}')
-        o.w(f'    c.JSON(200, obj)')
+        o.w('    c.JSON(200, "Deleted")')
         o.w(f'}}')
 
     @staticmethod

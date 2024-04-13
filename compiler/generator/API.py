@@ -26,7 +26,6 @@ def create_for(p: Program, o: Writer):
         o.w("package models")
         o.w()
         o.w("import (")
-        o.w('   "database/sql"')
         o.w('   "context"')
         o.w(")")
         Struct.for_object(obj).generate(o)
