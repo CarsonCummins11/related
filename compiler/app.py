@@ -6,10 +6,19 @@ from iostuff.writer import Writer
 from structures.program import Program
 from structures.function import Function
 import generator.API
+import os
 
 def gather_function_table(path: str = "derived") -> List[Function]:
     #to gather the funcs + types on local package derived, use:
     #go doc -short compiler/derived | grep "^[ ]*func "
+
+    #if theres no go package to examine funcs from, make it and delete it at the end
+    should_delete_mod_file = False
+    if not os.path.exists(f"go.mod"):
+        should_delete_mod_file = True
+        with open("go.mod", "w") as f:
+            f.write("module derived")
+
     proc = subprocess.Popen(f"go doc -C {path} -short derived | grep '^[ ]*func ' ",shell=True, stdout=subprocess.PIPE)
     functypes = [x.decode().replace("\n","") for x in proc.stdout.readlines()]
     print(functypes)
@@ -26,11 +35,15 @@ def gather_function_table(path: str = "derived") -> List[Function]:
         if argstring:
             argstrings = argstring.split(", ")
         argtypes = [x.split(" ")[1] for x in argstrings]
-        argnames = [x.split(" ")[0] for x in argstrings]
+        argnames = [x.split(" ")[0] for x in argstrings] #Might want to save eventually
 
         src = "\n".join([x.decode() for x in subprocess.Popen(f"go doc -C {path} -short -src derived.{fname}",shell=True, stdout=subprocess.PIPE).stdout.readlines()])
         function_table.append(Function(fname, freturn, argtypes))
         print(f"function {fname} with return {freturn} and args {argtypes} and src: \n{src}")
+
+    if should_delete_mod_file:
+        os.remove("go.mod")
+
     return function_table
 
 def run(pth: str, trg: str):

@@ -1,24 +1,35 @@
-from typing import Dict
+from typing import Dict, List
 from iostuff.writer import Writer
 from structures.program import Program
 from generator.routes.route import *
 
 class Router:
-    def __init__(self, routes: Dict[str,Route] = []):
+    def __init__(self, routes: Dict[str,List[Route]] = []):
         self.routes = routes
 
     def add_route(self, route: Route):
         self.routes.append(route)
 
     def generate(self, o: Writer) -> str:
-        o.w("router := gin.Default()")
+        o.w("   router := gin.Default()")
         o.w()
+        cf = o.current_file
+        o.use_file("routes/routes.go")
+        o.w("package routes")
+        o.w()
+        o.w("import (")
+        o.w('   "github.com/gin-gonic/gin"')
+        o.w()
+        o.w(f'   "{o.package()}/models"')
+        o.w(")")
+        o.use_file(cf)
         for obj, routes in self.routes.items():
-            o.w(f'{obj} := router.Group("/{obj}")')
+            cf = o.current_file
+            o.w(f'  {obj} := router.Group("/{obj}")')
             for route in routes:
-                o.w(f'{obj}.{route.method}("{route.path}", routes.{route.handler})')
+                o.w(f'  {obj}.{route.method}("{route.path}", routes.{route.handler})')
                 cf = o.current_file
-                o.use_file("routes.go")
+                o.use_file("routes/routes.go")
                 route.generate(o)
                 o.use_file(cf)
         

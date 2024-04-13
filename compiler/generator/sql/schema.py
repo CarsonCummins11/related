@@ -20,3 +20,4 @@ class Schema:
         return Schema([
             Table.for_object(obj) for obj in program.objects
         ])
+

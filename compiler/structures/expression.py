@@ -14,6 +14,15 @@ if TYPE_CHECKING:
 class Expression:
     def __init__(self,t: str):
         self.t = t
+
+    def dependencies(self) -> List["VariableExpression"]:
+        if type(self) == VariableExpression:
+            return [self]
+        if type(self) == FunctionExpression:
+            ret = []
+            for arg in self.args:
+                ret += arg.dependencies()
+        return []
     
     @staticmethod
     def parse(reader: Reader, obj:str, field_name: str, context: "Program") -> "Expression":
@@ -32,6 +41,9 @@ class Expression:
             return VariableExpression.parse(reader, obj, field_name, context)
         assert False, f"Expected expression, got {reader.peek()}"
         
+
+    def get_derivation_string(self) -> str:
+        return ""
         
         
         
@@ -68,6 +80,11 @@ class ConstantExpression(Expression):
     def __str__(self):
         return str(self.value)
     
+    def get_derivation_string(self) -> str:
+        if self.t == "string":
+            return f'"{self.value}"'
+        return str(self.value)
+    
 class VariableExpression(Expression):
     def __init__(self, name: str, obj: str, t: str):
         self.name = name
@@ -85,6 +102,9 @@ class VariableExpression(Expression):
     
     def __str__(self):
         return f"{self.obj}.{self.name}"
+    
+    def get_derivation_string(self) -> str:
+        return f"DB.QueryRow(`SELECT {self.name} FROM {self.obj} WHERE ID = ?`, id).Scan(&obj.{self.name})"
 
 class FunctionExpression(Expression):
     def __init__(self, name: str, t: str, args: List[Expression]):
@@ -116,3 +136,6 @@ class FunctionExpression(Expression):
     
     def __str__(self):
         return f"{self.name}({', '.join(map(str, self.args))}) returns {self.t}"
+    
+    def get_derivation_string(self) -> str:
+        return f"derivers.{self.name}({', '.join(map(lambda x: x.get_derivation_string(), self.args))}"

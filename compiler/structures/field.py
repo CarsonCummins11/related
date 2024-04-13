@@ -2,10 +2,12 @@
 # a stored field is written as <name>: @<type>
 # a derived field is written as <name>: <expression>
 from iostuff.reader import Reader
-from structures.expression import Expression
-from typing import TYPE_CHECKING
+from structures.expression import Expression, VariableExpression
+from typing import TYPE_CHECKING, List
 if TYPE_CHECKING:
     from structures.program import Program
+
+
 
 class Field:
     def __init__(self, name: str, parent_name:str, t: str):
@@ -17,6 +19,11 @@ class Field:
         if type(self) == DerivedField:
             return True
         return False
+    
+    def dependencies(self) -> List[VariableExpression]:
+        if type(self) == DerivedField:
+            return self.expression.dependencies()
+        return []
 
     @staticmethod
     def parse(reader: Reader, object_name: str, context: "Program") -> "Field":
@@ -64,4 +71,7 @@ class DerivedField(Field):
 
     def __str__(self):
         return f"{self.name}: {self.expression}"
+    
+    def get_derivation_string(self) -> str:
+        return self.expression.get_derivation_string()
 

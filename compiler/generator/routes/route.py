@@ -7,6 +7,9 @@ class Route:
         self.path = path
         self.handler = handler
         self.obj = obj
+    
+    def generate(self, o: Writer):
+        pass
 
 
 class CreateRoute(Route):
@@ -15,9 +18,13 @@ class CreateRoute(Route):
 
     def generate(self, o: Writer):
         o.w(f'func {self.handler}(c *gin.Context) {{')
-        o.w(f'    var obj {self.obj.name}')
+        o.w(f'    var obj models.{self.obj.name}')
         o.w(f'    c.BindJSON(&obj)')
-        o.w(f'    obj_hydrated := obj.Create()')
+        o.w(f'    obj_hydrated, err := obj.Create()')
+        o.w(f'    if err != nil {{')
+        o.w(f'        c.JSON(500, err)')
+        o.w(f'        return')
+        o.w(f'    }}')
         o.w(f'    c.JSON(200, obj_hydrated)')
         o.w(f'}}')
 
@@ -32,7 +39,11 @@ class ReadRoute(Route):
     def generate(self, o: Writer):
         o.w(f'func {self.handler}(c *gin.Context) {{')
         o.w(f'    id := c.Param("id")')
-        o.w(f'    obj := {self.obj.name}.Read(id)')
+        o.w(f'    obj, err := models.Read{self.obj.name}(id)')
+        o.w(f'    if err != nil {{')
+        o.w(f'        c.JSON(500, err)')
+        o.w(f'        return')
+        o.w(f'    }}')
         o.w(f'    c.JSON(200, obj)')
         o.w(f'}}')
 
@@ -47,9 +58,13 @@ class UpdateRoute(Route):
     def generate(self, o: Writer):
         o.w(f'func {self.handler}(c *gin.Context) {{')
         o.w(f'    id := c.Param("id")')
-        o.w(f'    var obj {self.obj.name}')
+        o.w(f'    var obj models.{self.obj.name}')
         o.w(f'    c.BindJSON(&obj)')
-        o.w(f'    obj_hydrated := obj.Update(id)')
+        o.w(f'    obj_hydrated, err := obj.Update(id)')
+        o.w(f'    if err != nil {{')
+        o.w(f'        c.JSON(500, err)')
+        o.w(f'        return')
+        o.w(f'    }}')
         o.w(f'    c.JSON(200, obj_hydrated)')
         o.w(f'}}')
 
@@ -64,7 +79,11 @@ class DeleteRoute(Route):
     def generate(self, o: Writer):
         o.w(f'func {self.handler}(c *gin.Context) {{')
         o.w(f'    id := c.Param("id")')
-        o.w(f'    obj := {self.obj.name}.Delete(id)')
+        o.w(f'    obj, err := models.Delete{self.obj.name}(id)')
+        o.w(f'    if err != nil {{')
+        o.w(f'        c.JSON(500, err)')
+        o.w(f'        return')
+        o.w(f'    }}')
         o.w(f'    c.JSON(200, obj)')
         o.w(f'}}')
 
