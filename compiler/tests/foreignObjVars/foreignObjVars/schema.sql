@@ -1,0 +1,10 @@
+CREATE TABLE Usr (
+    Name TEXT,
+    Item INTEGER,
+    ID SERIAL PRIMARY KEY
+);
+CREATE TABLE Itm (
+    Name TEXT,
+    Value INTEGER,
+    ID SERIAL PRIMARY KEY
+);

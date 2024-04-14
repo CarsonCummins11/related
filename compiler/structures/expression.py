@@ -6,10 +6,16 @@
 
 from iostuff.reader import Reader
 from typing import List
+import uuid
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from structures.program import Program
+
+def correct_go_type(t: str) -> str:
+    if t == "float":
+        return "float64"
+    return t
 
 class Expression:
     def __init__(self,t: str):
@@ -30,7 +36,7 @@ class Expression:
             return ConstantExpression.parse(reader, context)
         startpos = reader.get_pos()
         if reader.peek().isalpha():
-            name = reader.read_while_matching("[a-zA-Z0-9_]")
+            name = reader.read_while_matching("[a-zA-Z0-9_\.]")
             if reader.peek() == "(":
                 reader.pop()
                 reader.set_pos(startpos)
@@ -44,6 +50,9 @@ class Expression:
 
     def get_derivation_string(self) -> str:
         return ""
+    
+    def is_function(self) -> bool:
+        return type(self) == FunctionExpression
         
         
         
@@ -83,20 +92,23 @@ class ConstantExpression(Expression):
     def get_derivation_string(self) -> str:
         if self.t == "string":
             return f'"{self.value}"'
+        if self.t == "bool":
+            return f'{str(self.value).lower()}'
         return str(self.value)
     
 class VariableExpression(Expression):
-    def __init__(self, name: str, obj: str, t: str):
+    def __init__(self, name: str, obj: str, t: str, context: "Program"):
         self.name = name
         self.obj = obj
         self.t = t
-    
+        self.context = context
+        assert self.context, "Program context must be provided"
     @staticmethod
     def parse(reader: Reader, obj: str, field_name: str, context: "Program") -> Expression:
-        name = reader.read_while_matching("[a-zA-Z0-9_]")
+        name = reader.read_while_matching("[a-zA-Z0-9_\.]")
         assert name != "", "Variable name cannot be empty"
         assert name[0].isalpha(), f"Variable name {name} must start with a letter"
-        vr = VariableExpression(name, obj, "unknown")
+        vr = VariableExpression(name, obj, "unknown", context)
         context.assert_variable_eventually_exists(vr)
         return vr
     
@@ -104,7 +116,7 @@ class VariableExpression(Expression):
         return f"{self.obj}.{self.name}"
     
     def get_derivation_string(self) -> str:
-        return f"DB.QueryRow(`SELECT {self.name} FROM {self.obj} WHERE ID = ?`, id).Scan(&obj.{self.name})"
+        return f"obj.{self.name}"
 
 class FunctionExpression(Expression):
     def __init__(self, name: str, t: str, args: List[Expression]):
@@ -138,4 +150,4 @@ class FunctionExpression(Expression):
         return f"{self.name}({', '.join(map(str, self.args))}) returns {self.t}"
     
     def get_derivation_string(self) -> str:
-        return f"derivers.{self.name}({', '.join(map(lambda x: x.get_derivation_string(), self.args))}"
+        return f"derived.{self.name}({', '.join(map(lambda x: x.get_derivation_string(), self.args))})"

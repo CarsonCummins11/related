@@ -4,6 +4,7 @@ from generator.routes.router import Router
 from generator.structs.struct import Struct
 from generator.sql.schema import Schema
 from generator.sql.connection import Connection
+from generator.build.build import generate_build, generate_up
 
 def create_for(p: Program, o: Writer):
     #create the routes
@@ -27,14 +28,24 @@ def create_for(p: Program, o: Writer):
         o.w()
         o.w("import (")
         o.w('   "context"')
+        o.w('   "strconv"')
+        if len(Struct.for_object(obj).function_derived_fields()) > 0:
+            o.w(f'   "{o.package()}/derived"')
         o.w(")")
         Struct.for_object(obj).generate(o)
 
     
-    #create the DB
+    #create the DB schema and connection code
     Schema.for_program(p).generate(o)
     Connection.for_program(p).generate(o)
+
+    #create the build code
+    generate_build(p.name, o)
+    generate_up(p.name, o)
+    
+
     o.flush()
+
     
 
         

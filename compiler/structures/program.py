@@ -8,9 +8,10 @@ from structures.expression import VariableExpression
 PRIMITIVES = ["int", "float", "bool", "string"]
 
 class Program:
-    def __init__(self, objects: List[Object] = [], functions: List[Function] = []):
+    def __init__(self, name: str, objects: List[Object] = [], functions: List[Function] = []):
         self.objects = objects
         self.functions = functions
+        self.name = name
 
         self.types_must_exist: List[str] = []
         self.variables_must_exist: List[VariableExpression] = []
@@ -28,7 +29,7 @@ class Program:
 
     def check(self):
         for t in self.types_must_exist:
-            assert self.is_type(t), f"Type {t} must exist"
+            assert self.has_type(t), f"Type {t} must exist"
         
         for v in self.variables_must_exist:
             obj = self.get_object(v.obj)
@@ -37,7 +38,7 @@ class Program:
             v.t = vv.t
         
         for v, t in self.variable_type_assertions:
-            if not self.is_type(t):
+            if not self.has_type(t):
                 raise Exception(f"Type {t} must exist")
             
             objname, fieldname = v.split(".")
@@ -51,7 +52,7 @@ class Program:
             assert field.t == t, f"Field {v} must have type {t}"
 
 
-    def is_type(self, t: str) -> bool:
+    def has_type(self, t: str) -> bool:
         for obj in self.objects:
             if obj.name == t:
                 return True
@@ -73,6 +74,7 @@ class Program:
                 return True
         return False
     def has_function(self, name: str) -> bool:
+        print(self.functions)
         for func in self.functions:
             if func.name == name:
                 return True
@@ -91,9 +93,9 @@ class Program:
 
 
     @staticmethod
-    def parse(src: str, functions: List[Function]) -> 'Program':
+    def parse(src: str, name: str, functions: List[Function]) -> 'Program':
         reader = Reader(src)
-        result = Program([], functions)
+        result = Program(name, [], functions)
 
         while reader.can_read():
             result.add_object(Object.parse(reader, result))

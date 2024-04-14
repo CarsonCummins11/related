@@ -7,17 +7,29 @@ if TYPE_CHECKING:
     from structures.program import Program
 
 class Object:
-    def __init__(self, name:str, fields: List[Field]):
+    def __init__(self, name:str, fields: List[Field], context: "Program"):
         self.name = name
         self.fields = fields
+        assert context, "Context must be provided to object"
+        self.context = context
 
     def get_field(self, name: str) -> Field:
+        if "." in name:
+            objname, fieldname = name.split(".")
+            if self.has_field(objname):
+                return self.context.get_object(self.get_field(objname).t).get_field(fieldname)
+            raise Exception(f"Field {objname} does not exist in object {self.name}")
         for field in self.fields:
             if field.name == name:
                 return field
         raise Exception(f"Field {name} does not exist in object {self.name}")
     
     def has_field(self, name: str) -> bool:
+        if "." in name:
+            objname, fieldname = name.split(".")
+            if self.has_field(objname):
+                return self.context.get_object(self.get_field(objname).t).has_field(fieldname)
+            return False
         for field in self.fields:
             if field.name == name:
                 return True
@@ -46,4 +58,4 @@ class Object:
         assert reader.pop() == "}", "Expected }"
         reader.pop_whitespace()
 
-        return Object(name, fields)
+        return Object(name, fields, context)

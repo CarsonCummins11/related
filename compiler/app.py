@@ -52,11 +52,16 @@ def run(pth: str, trg: str):
         derived_loc = "/".join(pth.split("/")[:-1]) + "/derived"
     print("expecting derived located at ", derived_loc)
     src = open(pth).read()
-    p = Program.parse(src, gather_function_table(derived_loc))
+    name = trg.split("/")[-1].split(".")[0]
+
+
+    p = Program.parse(src, name, gather_function_table(derived_loc))
     print(p)
 
     writer = Writer(trg)
     generator.API.create_for(p, writer)
+    #copy in derived folder
+    os.system(f"cp -r {derived_loc} {trg}")
 
 
 

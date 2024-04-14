@@ -1,0 +1,15 @@
+Usr {
+    Name: @string;
+    Item: @Itm;
+    Tr: true;
+    S: "a string here";
+    N: 55;
+    W: 42.123;
+    QuadValue: Times2(Item.DoubleValue);
+}
+
+Itm {
+    Name: @string;
+    Value: @int;
+    DoubleValue: Times2(Value);
+}

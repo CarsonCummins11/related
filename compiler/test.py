@@ -5,6 +5,7 @@ import time
 import sys
 
 def run_test(name: str, rebuild=False) -> bool:
+    os.system("kill -9 $(lsof -ti:8080)") #kill any running servers
     if not os.path.exists(f"tests/{name}/{name}/up.sh") or rebuild:
         os.system(f"rm -rf tests/{name}/{name}") #clean up
         print("Rebuilding test server for", name)
@@ -12,13 +13,15 @@ def run_test(name: str, rebuild=False) -> bool:
         assert os.path.exists(f"tests/{name}/{name}/build.sh"), f"Failed to build test server {name}"
         os.chdir(f"tests/{name}/{name}")
         subprocess.run(["sh","build.sh"])
-    print("Running test", name)
-    subprocess.Popen(["sh","up.sh"])
+    print("Starting server for test", name)
+    with open("../server_logs.txt", "w") as f:
+        subprocess.Popen(["sh","up.sh"], stdout=f, stderr=f)
+    print("Server started, waiting a sec for it to boot up...")
     #give the server a sec to start up
     time.sleep(2)
     #run the test
     os.chdir(f"../../..")
-    p = subprocess.run(["python",f"tests/{name}/test.py"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.run(["python",f"tests/{name}/test.py"])
     return p.returncode == 0
 
 def run_tests(rebuild=False, runOnly=None):

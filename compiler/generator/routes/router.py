@@ -19,6 +19,7 @@ class Router:
         o.w()
         o.w("import (")
         o.w('   "github.com/gin-gonic/gin"')
+        o.w('   "log"')
         o.w()
         o.w(f'   "{o.package()}/models"')
         o.w(")")
