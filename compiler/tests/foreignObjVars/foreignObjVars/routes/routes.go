@@ -8,6 +8,7 @@ import (
 )
 func CreateUsr_route(c *gin.Context) {
     var obj models.Usr
+    log.Println("Raw body: ", c.Request.Body)
     c.BindJSON(&obj)
     log.Println("Creating object: ", obj)
     obj_hydrated, err := obj.Create()
@@ -65,6 +66,7 @@ func DeleteUsr_route(c *gin.Context) {
 }
 func CreateItm_route(c *gin.Context) {
     var obj models.Itm
+    log.Println("Raw body: ", c.Request.Body)
     c.BindJSON(&obj)
     log.Println("Creating object: ", obj)
     obj_hydrated, err := obj.Create()

@@ -32,7 +32,7 @@ func (obj Usr) Hydrate() UsrHydrated {
       S: "a string here",
       N: 55,
       W: 42.123,
-      QuadValue: derived.Times2(obj.Item.DoubleValue),
+      QuadValue: derived.Times2(Item.DoubleValue),
         ID: obj.ID,
     }
 }

@@ -1,1 +1,23 @@
-up.sh: line 3: ./foreignObjVars: No such file or directory
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /Usr/create               --> foreignObjVars/routes.CreateUsr_route (3 handlers)
+[GIN-debug] GET    /Usr/read/:id             --> foreignObjVars/routes.ReadUsr_route (3 handlers)
+[GIN-debug] PUT    /Usr/update/:id           --> foreignObjVars/routes.UpdateUsr_route (3 handlers)
+[GIN-debug] DELETE /Usr/delete/:id           --> foreignObjVars/routes.DeleteUsr_route (3 handlers)
+[GIN-debug] POST   /Itm/create               --> foreignObjVars/routes.CreateItm_route (3 handlers)
+[GIN-debug] GET    /Itm/read/:id             --> foreignObjVars/routes.ReadItm_route (3 handlers)
+[GIN-debug] PUT    /Itm/update/:id           --> foreignObjVars/routes.UpdateItm_route (3 handlers)
+[GIN-debug] DELETE /Itm/delete/:id           --> foreignObjVars/routes.DeleteItm_route (3 handlers)
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on localhost:8080
+2024/04/14 18:11:17 Raw body:  &{0x140000d73f8 <nil> <nil> false true {0 0} false false false 0x100fc4810}
+2024/04/14 18:11:17 Creating object:  {carson 10 0}
+[GIN] 2024/04/14 - 18:11:17 | 200 |    4.299625ms |       127.0.0.1 | POST     "/Itm/create"
+2024/04/14 18:11:17 Raw body:  &{0x140000d6288 <nil> <nil> false true {0 0} false false false 0x100fc4810}
+2024/04/14 18:11:17 Creating object:  {carson 1 0}
+[GIN] 2024/04/14 - 18:11:17 | 200 |    2.657375ms |       127.0.0.1 | POST     "/Usr/create"
