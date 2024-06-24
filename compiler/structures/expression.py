@@ -116,6 +116,8 @@ class VariableExpression(Expression):
         return f"{self.obj}.{self.name}"
     
     def get_derivation_string(self) -> str:
+        if "[" in self.t:
+            return f"_L_{self.name}"
         if "." in self.name:
             return self.name
         return f"obj.{self.name}"

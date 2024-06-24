@@ -17,9 +17,10 @@ class Field:
         self.t = t
     
     def is_derived(self) -> bool:
-        if type(self) == DerivedField:
-            return True
-        return False
+        return type(self) == DerivedField
+    
+    def is_list(self) -> bool:
+        return type(self) == ListField
     
     def is_object_field(self) -> bool:
         return type(self) == ObjectField
@@ -51,12 +52,31 @@ class Field:
                 ret = PrimitiveField(name, object_name, t)
 
             return ret
+        elif reader.peek() == "[":
+            reader.pop()
+            reader.pop_whitespace()
+            assert reader.pop() == "]", "List fields must be defined like []type"
+            reader.pop_whitespace()
+            t = reader.readuntil(";")
+            if not context.has_type(t):
+                    context.assert_type_eventually_exists(t)
+            return ListField(name, object_name, "[]"+t)
         else:
             return DerivedField.parse(reader, object_name, name, context)
         
     def get_derivation_string(self) -> str:
         raise NotImplementedError()
         
+
+class ListField(Field):
+    def __init__(self, name: str, object_name: str, t: str):
+        super().__init__(name, object_name, t)
+
+    def __str__(self):
+        return f"{self.name}: list of pointers to values of type {self.t}"
+    
+    def get_derivation_string(self) -> str:
+        return f'_L_{self.name}'
 
 
 class PrimitiveField(Field):

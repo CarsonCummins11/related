@@ -13,13 +13,10 @@ ID int
 type UsrHydrated struct {
     Name string
     Item ItmHydrated
-    Tr bool
-    S string
-    N int
-    W float64
     QuadValue int
 ID int
 }
+
 func (obj Usr) Hydrate() UsrHydrated {
     Item, err := ReadItm(strconv.Itoa(obj.Item))
     if err != nil {
@@ -28,10 +25,6 @@ func (obj Usr) Hydrate() UsrHydrated {
     return UsrHydrated{
       Name: obj.Name,
       Item: Item,
-      Tr: true,
-      S: "a string here",
-      N: 55,
-      W: 42.123,
       QuadValue: derived.Times2(Item.DoubleValue),
         ID: obj.ID,
     }
@@ -73,5 +66,8 @@ func (obj Usr) Update(id string) (UsrHydrated,error) {
 
 func DeleteUsr(id string) error {
     _, err := DB.Exec(context.TODO(),"DELETE FROM Usr WHERE ID = $1", id)
+    if err != nil {
+        return err
+    }
     return err
 }

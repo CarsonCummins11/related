@@ -1,3 +1,4 @@
+from structures.program import PRIMITIVES
 from structures.object import Object
 from iostuff.writer import Writer
 
@@ -66,9 +67,21 @@ class UpdateRoute(Route):
     def generate(self, o: Writer):
         o.w(f'func {self.handler}(c *gin.Context) {{')
         o.w(f'    id := c.Param("id")')
-        o.w(f'    var obj models.{self.obj.name}')
+        o.w(f'    var obj struct{{')
+        o.w(f'      Obj models.{self.obj.name}')
+        for field in self.obj.fields:
+            if field.is_list():
+                o.w(f'      LA_{field.name} []{field.t.replace("[]","") if field.t.replace("[]","") in PRIMITIVES else "int"}')
+                o.w(f'      LD_{field.name} []int')
+        o.w(f'    }}')
         o.w(f'    c.BindJSON(&obj)')
-        o.w(f'    obj_hydrated, err := obj.Update(id)')
+        o.w(f'    log.Println("Updating object: ", obj)')
+        o.w(f'    obj_hydrated, err := obj.Obj.Update(id,')
+        for field in self.obj.fields:
+            if field.is_list():
+                o.w(f'        obj.LA_{field.name},')
+                o.w(f'        obj.LD_{field.name},')
+        o.w(f'    )')
         o.w(f'    if err != nil {{')
         o.w(f'        if err.Error() == "no rows in result set" {{')
         o.w(f'            c.JSON(404, "Object not found")')

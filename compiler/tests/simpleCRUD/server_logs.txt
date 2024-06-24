@@ -15,12 +15,12 @@
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on localhost:8080
-2024/04/14 18:11:14 Raw body:  &{0x1400000e150 <nil> <nil> false true {0 0} false false false 0x103114810}
-2024/04/14 18:11:14 Creating object:  {carson 10 0}
-[GIN] 2024/04/14 - 18:11:14 | 200 |    3.813834ms |       127.0.0.1 | POST     "/Itm/create"
-[GIN] 2024/04/14 - 18:11:14 | 200 |     972.292µs |       127.0.0.1 | GET      "/Itm/read/1"
-[GIN] 2024/04/14 - 18:11:14 | 200 |     707.875µs |       127.0.0.1 | PUT      "/Itm/update/1"
-2024/04/14 18:11:14 Deleted object with id:  1
-[GIN] 2024/04/14 - 18:11:14 | 200 |     351.084µs |       127.0.0.1 | DELETE   "/Itm/delete/1"
-[GIN] 2024/04/14 - 18:11:14 | 404 |      193.25µs |       127.0.0.1 | GET      "/Itm/read/1"
-up.sh: line 3: 59056 Killed: 9               ./simpleCRUD
+2024/06/23 21:29:25 Creating object:  {carson 10 0}
+[GIN] 2024/06/23 - 21:29:25 | 200 |    3.351542ms |       127.0.0.1 | POST     "/Itm/create"
+[GIN] 2024/06/23 - 21:29:25 | 200 |    1.417541ms |       127.0.0.1 | GET      "/Itm/read/1"
+2024/06/23 21:29:25 Updating object:  {{carson 20 0}}
+[GIN] 2024/06/23 - 21:29:25 | 200 |     754.542µs |       127.0.0.1 | PUT      "/Itm/update/1"
+2024/06/23 21:29:25 Deleted object with id:  1
+[GIN] 2024/06/23 - 21:29:25 | 200 |     572.833µs |       127.0.0.1 | DELETE   "/Itm/delete/1"
+[GIN] 2024/06/23 - 21:29:25 | 404 |     155.125µs |       127.0.0.1 | GET      "/Itm/read/1"
+up.sh: line 3: 56318 Killed: 9               ./simpleCRUD

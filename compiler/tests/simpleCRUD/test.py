@@ -10,7 +10,7 @@ r.raise_for_status()
 print(r.text)
 assert r.text == '{"Name":"carson","Value":10,"DoubleValue":20,"ID":1}'
 print("updating 1")
-r = requests.put('http://localhost:8080/Itm/update/1', json={'Name': 'carson', 'Value': 20})
+r = requests.put('http://localhost:8080/Itm/update/1', json={'obj':{'Name': 'carson', 'Value': 20}})
 r.raise_for_status()
 print(r.text)
 assert r.text == '{"Name":"carson","Value":20,"DoubleValue":40,"ID":1}'

@@ -35,6 +35,9 @@ class Object:
                 return True
         return False
     
+    def stored_fields(self) -> List[Field]:
+        return [field for field in self.fields if not field.is_derived() and not field.is_list()]
+    
     def __str__(self):
         ret = f"{self.name}:\n"
         for field in self.fields:

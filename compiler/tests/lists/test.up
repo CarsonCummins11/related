@@ -1,0 +1,10 @@
+ChildTest{
+    MyList: []string;
+    MyName: @string;
+    MyValue: @int;
+    CapitalMyList: Capitalize_all(MyList);
+}
+ParentTest{
+    MyChildTests: []ChildTest;
+    AnotherField: @string;
+}

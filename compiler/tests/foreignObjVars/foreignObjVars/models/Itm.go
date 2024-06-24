@@ -16,6 +16,7 @@ type ItmHydrated struct {
     DoubleValue int
 ID int
 }
+
 func (obj Itm) Hydrate() ItmHydrated {
     return ItmHydrated{
       Name: obj.Name,
@@ -61,5 +62,8 @@ func (obj Itm) Update(id string) (ItmHydrated,error) {
 
 func DeleteItm(id string) error {
     _, err := DB.Exec(context.TODO(),"DELETE FROM Itm WHERE ID = $1", id)
+    if err != nil {
+        return err
+    }
     return err
 }

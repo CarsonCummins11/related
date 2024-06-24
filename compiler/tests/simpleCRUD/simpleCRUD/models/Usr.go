@@ -18,6 +18,7 @@ type UsrHydrated struct {
     W float64
 ID int
 }
+
 func (obj Usr) Hydrate() UsrHydrated {
     Item, err := ReadItm(strconv.Itoa(obj.Item))
     if err != nil {
@@ -70,5 +71,8 @@ func (obj Usr) Update(id string) (UsrHydrated,error) {
 
 func DeleteUsr(id string) error {
     _, err := DB.Exec(context.TODO(),"DELETE FROM Usr WHERE ID = $1", id)
+    if err != nil {
+        return err
+    }
     return err
 }

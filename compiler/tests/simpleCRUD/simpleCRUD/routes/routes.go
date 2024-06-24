@@ -8,7 +8,6 @@ import (
 )
 func CreateUsr_route(c *gin.Context) {
     var obj models.Usr
-    log.Println("Raw body: ", c.Request.Body)
     c.BindJSON(&obj)
     log.Println("Creating object: ", obj)
     obj_hydrated, err := obj.Create()
@@ -35,9 +34,13 @@ func ReadUsr_route(c *gin.Context) {
 }
 func UpdateUsr_route(c *gin.Context) {
     id := c.Param("id")
-    var obj models.Usr
+    var obj struct{
+      Obj models.Usr
+    }
     c.BindJSON(&obj)
-    obj_hydrated, err := obj.Update(id)
+    log.Println("Updating object: ", obj)
+    obj_hydrated, err := obj.Obj.Update(id,
+    )
     if err != nil {
         if err.Error() == "no rows in result set" {
             c.JSON(404, "Object not found")
@@ -66,7 +69,6 @@ func DeleteUsr_route(c *gin.Context) {
 }
 func CreateItm_route(c *gin.Context) {
     var obj models.Itm
-    log.Println("Raw body: ", c.Request.Body)
     c.BindJSON(&obj)
     log.Println("Creating object: ", obj)
     obj_hydrated, err := obj.Create()
@@ -93,9 +95,13 @@ func ReadItm_route(c *gin.Context) {
 }
 func UpdateItm_route(c *gin.Context) {
     id := c.Param("id")
-    var obj models.Itm
+    var obj struct{
+      Obj models.Itm
+    }
     c.BindJSON(&obj)
-    obj_hydrated, err := obj.Update(id)
+    log.Println("Updating object: ", obj)
+    obj_hydrated, err := obj.Obj.Update(id,
+    )
     if err != nil {
         if err.Error() == "no rows in result set" {
             c.JSON(404, "Object not found")

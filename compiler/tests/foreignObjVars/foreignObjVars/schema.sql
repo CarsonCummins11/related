@@ -1,6 +1,6 @@
 CREATE TABLE Usr (
     Name TEXT,
-    Item INTEGER,
+    FOREIGN KEY (Item) REFERENCES Itm(ID),
     ID SERIAL PRIMARY KEY
 );
 CREATE TABLE Itm (
