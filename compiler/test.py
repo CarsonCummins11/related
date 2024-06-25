@@ -6,15 +6,15 @@ import sys
 
 def run_test(name: str, rebuild=False) -> bool:
     os.system("kill -9 $(lsof -ti:8080)") #kill any running servers
-    if not os.path.exists(f"tests/{name}/{name}/up.sh") or rebuild:
-        os.system(f"rm -rf tests/{name}/{name}") #clean up
+    if not os.path.exists(f"tests/trg/{name}/up.sh") or rebuild:
+        os.system(f"rm -rf tests/trg/{name}") #clean up
         print("Rebuilding test server for", name)
-        subprocess.run(["python","app.py", f"tests/{name}/test.up", f"tests/{name}/{name}"])
-        assert os.path.exists(f"tests/{name}/{name}/build.sh"), f"Failed to build test server {name}"
-        os.chdir(f"tests/{name}/{name}")
+        subprocess.run(["python","app.py", f"tests/{name}/test.up", f"tests/trg/{name}"])
+        assert os.path.exists(f"tests/trg/{name}/build.sh"), f"Failed to build test server {name}"
+        os.chdir(f"tests/trg/{name}")
         subprocess.run(["sh","build.sh"])
     print("Starting server for test", name)
-    with open("../server_logs.txt", "w") as f:
+    with open("server_logs.txt", "w") as f:
         subprocess.Popen(["sh","up.sh"], stdout=f, stderr=f)
     print("Server started, waiting a sec for it to boot up...")
     #give the server a sec to start up

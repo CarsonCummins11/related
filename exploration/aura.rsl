@@ -1,0 +1,77 @@
+#every Account has email: str and sessions: []string, which are set on login process
+#$ is currently attached account
+#(Type) causes inheritance of type
+#Type or Field - one or more of RUD: (Boolean statement), if boolean is true we serve that data, otherwise omit
+#*Type{ value comparator value \n value comparator value} get all of type satisfing true for each of comparator statements
+#File types @Image, @Video, @Document are stored in S3
+#derivation or query followed by eventually to trigger jobs
+
+
+# Todos to get this to work are:
+# lists
+# authentication
+# *Type{} syntax for queries
+# blob files
+# eventually derivations
+
+Account {
+    Name: @string;
+    Bio: @string;
+    Icon: @Image - U: llm("Is this a real person", Icon);
+    Subjects: []string;
+    ResearchGroup: @ResearchGroup;
+} - R:(True) UD: ($.Email == Email);
+
+Account:Student{
+    TheAccount: Account
+    URL: FormatURL("student",ID);
+    Resume: @Document;
+    Summary: LLM("Summarize a student based on this information",Resume,Description) eventually;
+    Applications: []Application RUD:($.Email == Email);
+}
+
+Mentor{
+    TheAccount: Account;
+    URL: FormatURL("mentor",ID);
+}
+
+Application{
+    Applicant: @Student;
+    Application: []string;
+    To: @ResearchGroup; 
+    Accepted: @bool;
+    Viewed: @bool;
+} - RD:($.Email in To.Mentors.Email || $.email == Applicant.Email) U:(False);
+
+ResearchGroup {
+    Name: @string;
+    Description: @string;
+    Mentors: *Mentor{
+        TheAccount.ResearchGroup.ID equals ID;
+    } eventually;
+    Students: *Student{
+        TheAccount.ResearchGroup.ID equals ID;
+    } eventually;
+    Icon: @string;
+    Subjects: []string;
+    AcceptingApplicants: @bool;
+    Applications: *Application{
+        To.ID equals ID;
+    } - R: ($.Email in Mentors.Email);
+    ApplicationQuestions: []string;
+    QR: CreateQR(URL);
+    URL: FormatURL("researchgroup",ID);
+    ApplicantCount: Len(Applications);
+}  - R: (True) UD: ($.Email in Mentors.Email);
+
+
+Search {
+    Subjects: []string;
+    AcceptingApplicants: @bool;
+    SearchString: @string;
+    Result: *ResearchGroup{
+        Subjects intersects Subjects
+        AcceptingApplicants equals AcceptingApplicants
+        Description search SearchString
+    };
+}  - R: (True) UD: ($.Email in Mentors.Email);
