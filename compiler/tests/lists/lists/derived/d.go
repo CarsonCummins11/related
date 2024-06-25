@@ -23,3 +23,7 @@ func Capitalize_all(a []string) []string {
 	}
 	return b
 }
+
+func PlusFunc(a int, b int) int {
+	return a + b
+}

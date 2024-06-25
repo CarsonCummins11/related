@@ -14,6 +14,7 @@ type ChildTestHydrated struct {
     MyList []string
     MyName string
     MyValue int
+    MyValueMore int
     CapitalMyList []string
 ID int
 }
@@ -23,7 +24,6 @@ println("fetching list for MyList")
     ret := make([]string,0)
     rows,err := DB.Query(context.TODO(),"SELECT MyList FROM ChildTest_MyList WHERE ChildTest_id = $1", obj.ID)
     if err != nil {
-        panic(err)
         return []string{}
     }
     for rows.Next() {
@@ -31,7 +31,6 @@ println("fetching list for MyList")
         var temp string
         err = rows.Scan(&temp)
         if err != nil {
-            panic(err)
             continue
         }
         ret = append(ret,temp)
@@ -45,6 +44,7 @@ func (obj ChildTest) Hydrate() ChildTestHydrated {
       MyList: _L_MyList,
       MyName: obj.MyName,
       MyValue: obj.MyValue,
+      MyValueMore: derived.PlusFunc(obj.MyValue, 10),
       CapitalMyList: derived.Capitalize_all(_L_MyList),
         ID: obj.ID,
     }

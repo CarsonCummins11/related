@@ -19,7 +19,6 @@ println("fetching list for MyChildTests")
     ret := make([]ChildTest,0)
     rows,err := DB.Query(context.TODO(),"SELECT ChildTest.* FROM ParentTest_MyChildTests INNER JOIN ChildTest ON ParentTest_MyChildTests.MyChildTests = ChildTest.ID WHERE ParentTest_MyChildTests.ParentTest_id = $1", obj.ID)
     if err != nil {
-        panic(err)
         return []ChildTestHydrated{}
     }
     for rows.Next() {
@@ -27,7 +26,6 @@ println("fetching list for MyChildTests")
         var temp ChildTest
         err = rows.Scan(&temp.MyName, &temp.MyValue,&temp.ID)
         if err != nil {
-            panic(err)
             continue
         }
         ret = append(ret,temp)

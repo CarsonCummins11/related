@@ -2,6 +2,7 @@ ChildTest{
     MyList: []string;
     MyName: @string;
     MyValue: @int;
+    MyValueMore: PlusFunc(MyValue, 10);
     CapitalMyList: Capitalize_all(MyList);
 }
 ParentTest{

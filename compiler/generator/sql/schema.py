@@ -11,8 +11,12 @@ class Schema:
 
     def generate(self, o: Writer):
         o.use_file("schema.sql")
+        foreign_keys = []
         for table in self.tables:
-            table.generate(o)
+            foreign_keys += table.generate(o)
+        
+        for fk in foreign_keys:
+            o.w(fk)
         
 
     @staticmethod

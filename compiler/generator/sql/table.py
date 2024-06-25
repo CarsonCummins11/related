@@ -23,16 +23,20 @@ class Table:
         self.name = name
         self.fields = [field for field in fields if not field.is_derived()]
 
-    def generate(self, o: Writer):
+    def generate(self, o: Writer) -> List[str]:
+        '''
+            returns a list of foreign keys constraints to be added after the table is created
+        '''
+        foreign_keys: List[str] = []
+
         o.w(f'CREATE TABLE {self.name} (')
         for field in self.fields:
             if field.is_list():
                 continue
             else:
                 if field.is_object_field():
-                    o.w(f'    FOREIGN KEY ({field.name}) REFERENCES {field.t.replace("[]","")}(ID),')
-                else:
-                    o.w(f'    {field.name} {type_for_sql(field.t)},')
+                    foreign_keys.append(' ALTER TABLE ' + self.name + ' ADD FOREIGN KEY (' + field.name + ') REFERENCES ' + field.t.replace("[]","") + '(ID);')
+                o.w(f'    {field.name} {type_for_sql(field.t)},')
         o.w(f'    ID SERIAL PRIMARY KEY')
         o.w(');')
 
@@ -47,6 +51,8 @@ class Table:
                 o.w(f'    FOREIGN KEY ({self.name}_id) REFERENCES {self.name}(ID),')
                 o.w(f'    ID SERIAL PRIMARY KEY')
                 o.w(');')
+
+        return foreign_keys
 
     @staticmethod
     def for_object(obj: Object) -> 'Table':

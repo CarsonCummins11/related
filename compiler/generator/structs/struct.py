@@ -15,12 +15,8 @@ def correct_go_type(t: str) -> str:
 
     if t == "float":
         return "float64"
-    if t == "int":
-        return "int"
-    if t == "bool":
-        return "bool"
-    if t == "string":
-        return "string"
+    if t in PRIMITIVES:
+        return t
     
     #assuming if its not a primitive, its a reference to another object
     return t+"Hydrated"
@@ -28,12 +24,8 @@ def correct_go_type(t: str) -> str:
 def correct_go_type_unhydrated(t: str) -> str:
     if t == "float":
         return "float64"
-    if t == "int":
-        return "int"
-    if t == "bool":
-        return "bool"
-    if t == "string":
-        return "string"
+    if t in PRIMITIVES:
+        return t
     
     #assuming if its not a primitive, its a reference to another object
     return "int"
@@ -108,7 +100,6 @@ class StructHydrator:
                     #we need to join the tables for that query
                     o.w(f'    rows,err := DB.Query(context.TODO(),"SELECT {field.t.replace('[]','')}.* FROM {self.s.name}_{field.name} INNER JOIN {field.t.replace('[]','')} ON {self.s.name}_{field.name}.{field.name} = {field.t.replace('[]','')}.ID WHERE {self.s.name}_{field.name}.{self.s.name}_id = $1", obj.ID)')
                 o.w(f'    if err != nil {{')
-                o.w(f'        panic(err)')
                 o.w(f'        return {correct_go_type(field.t)}{{}}')
                 o.w(f'    }}')
                 o.w(f'    for rows.Next() {{')
@@ -120,7 +111,6 @@ class StructHydrator:
                 else:
                     o.w(f'        err = rows.Scan(&temp)')
                 o.w(f'        if err != nil {{')
-                o.w(f'            panic(err)')
                 o.w(f'            continue')
                 o.w(f'        }}')
                 o.w(f'        ret = append(ret,temp)')
