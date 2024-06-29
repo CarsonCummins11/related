@@ -2,6 +2,7 @@
 from typing import List
 from iostuff.reader import Reader
 from structures.field import Field
+from structures.governance import Governance
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from structures.program import Program
@@ -60,5 +61,9 @@ class Object:
             reader.pop_whitespace()
         assert reader.pop() == "}", "Expected }"
         reader.pop_whitespace()
+
+        #parse governance string if present
+        if reader.peek() == "-":
+            Governance.parse(reader, context)
 
         return Object(name, fields, context)

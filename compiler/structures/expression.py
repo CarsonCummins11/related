@@ -155,3 +155,20 @@ class FunctionExpression(Expression):
     
     def get_derivation_string(self) -> str:
         return f"derived.{self.name}({', '.join(map(lambda x: x.get_derivation_string(), self.args))})"
+    
+
+
+class BooleanExpression:
+    def __init__(self, left: Expression, right: Expression, op: str):
+        self.left = left
+        self.right = right
+        self.op = op
+
+    @staticmethod
+    def parse(reader: Reader, context: "Program"):
+        left = Expression.parse(reader, context)
+        reader.pop_whitespace()
+        op = reader.pop()
+        reader.pop_whitespace()
+        right = Expression.parse(reader, context)
+        return BooleanExpression(left, right, op)

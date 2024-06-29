@@ -8,8 +8,7 @@
 
 
 # Todos to get this to work are:
-# lists
-# authentication
+# data access governence
 # *Type{} syntax for queries
 # blob files
 # eventually derivations
