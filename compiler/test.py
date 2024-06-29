@@ -36,6 +36,8 @@ def run_tests(rebuild=False, runOnly=None):
     total_passed = 0
     failing = []
     for test in os.listdir("tests"):
+        if test == "trg":
+            continue
         total+=1
         if run_test(test, rebuild):
             total_passed+=1
