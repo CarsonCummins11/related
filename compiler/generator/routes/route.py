@@ -33,7 +33,7 @@ class CreateRoute(Route):
 
     @staticmethod
     def for_object(obj: Object) -> 'CreateRoute':
-        return CreateRoute("POST", "/create", f"Create{obj.name}_route", obj)
+        return CreateRoute("POST", "/", f"Create{obj.name}_route", obj)
 
 class ReadRoute(Route):
     def __init__(self, method: str, path: str, handler: str, obj: Object):
@@ -58,7 +58,7 @@ class ReadRoute(Route):
 
     @staticmethod
     def for_object(obj: Object) -> 'ReadRoute':
-        return ReadRoute("GET", "/read/:id", f"Read{obj.name}_route", obj)
+        return ReadRoute("GET", "/:id", f"Read{obj.name}_route", obj)
 
 class UpdateRoute(Route):
     def __init__(self, method: str, path: str, handler: str, obj: Object):
@@ -96,7 +96,7 @@ class UpdateRoute(Route):
 
     @staticmethod
     def for_object(obj: Object) -> 'UpdateRoute':
-        return UpdateRoute("PUT", "/update/:id", f"Update{obj.name}_route", obj)
+        return UpdateRoute("PUT", "/:id", f"Update{obj.name}_route", obj)
 
 class DeleteRoute(Route):
     def __init__(self, method: str, path: str, handler: str, obj: Object):
@@ -121,4 +121,4 @@ class DeleteRoute(Route):
 
     @staticmethod
     def for_object(obj: Object) -> 'DeleteRoute':
-        return DeleteRoute("DELETE", "/delete/:id", f"Delete{obj.name}_route", obj)
+        return DeleteRoute("DELETE", "/:id", f"Delete{obj.name}_route", obj)

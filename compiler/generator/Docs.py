@@ -53,7 +53,7 @@ def generate_docs(p: Program) -> str:
 
     for obj in p.objects:
         docs["tags"].append({"name": obj.name, "description": f"Operations for {obj.name}"})
-        docs["paths"][f"/{obj.name}/create"] = {
+        docs["paths"][f"/{obj.name}/"] = {
             "post": {
                 "tags": [obj.name],
                 "summary": f"Create a new {obj.name}",
@@ -81,7 +81,7 @@ def generate_docs(p: Program) -> str:
             }
         }
 
-        docs["paths"][f"/{obj.name}/read/{{id}}"] = {
+        docs["paths"][f"/{obj.name}/{{id}}"] = {
             "get": {
                 "tags": [obj.name],
                 "summary": f"Read a {obj.name} by ID",
@@ -111,10 +111,7 @@ def generate_docs(p: Program) -> str:
                         "description": f"No {obj.name} with the specified ID was found"
                     }
                 }
-            }
-        }
-
-        docs["paths"][f"/{obj.name}/update/{{id}}"] = {
+            },
             "put": {
                 "tags": [obj.name],
                 "summary": f"Update a {obj.name} by ID",
@@ -153,10 +150,7 @@ def generate_docs(p: Program) -> str:
                         "description": f"No {obj.name} with the specified ID was found"
                     }
                 }
-            }
-        }
-
-        docs["paths"][f"/{obj.name}/delete/{{id}}"] = {
+            },
             "delete": {
                 "tags": [obj.name],
                 "summary": f"Delete a {obj.name} by ID",
@@ -230,7 +224,7 @@ def generate_docs(p: Program) -> str:
                     "type": "array",
                     "items": {
                         "type": correct_type(field.t),
-                        "example": example_for_type(field.t)[1:-1]
+                        "example": example_for_type(field.t)
                     }
                 }
                 
