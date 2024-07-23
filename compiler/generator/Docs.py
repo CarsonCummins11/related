@@ -7,7 +7,7 @@ OPEN_API_VERSION = "3.0.3"
 def example_for_type(t: str) -> str:
     if t == "string":
         return "example"
-    elif t == "integer":
+    elif t == "int":
         return 10
     elif t == "number":
         return 10.5
@@ -16,7 +16,21 @@ def example_for_type(t: str) -> str:
     elif t == "array":
         return []
     else:
-        return "No example for type " + t
+        return "An integer ID referencing a "+t
+    
+def correct_type(t: str) -> str:
+    if t == "string":
+        return "string"
+    elif t == "int":
+        return "integer"
+    elif t == "number":
+        return "number"
+    elif t == "boolean":
+        return "boolean"
+    elif t == "array":
+        return "array"
+    else:
+        return "integer"
 
 
 def generate_docs(p: Program) -> str:
@@ -46,7 +60,7 @@ def generate_docs(p: Program) -> str:
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": f"#/components/schemas/{obj.name}"
+                                "$ref": f"#/components/schemas/{obj.name}_dehydrated"
                             }
                         }
                     }
@@ -118,7 +132,7 @@ def generate_docs(p: Program) -> str:
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": f"#/components/schemas/{obj.name}"
+                                "$ref": f"#/components/schemas/{obj.name}_dehydrated"
                             }
                         }
                     }
@@ -170,7 +184,18 @@ def generate_docs(p: Program) -> str:
         docs["components"]["schemas"][obj.name] = {
             "type": "object",
             "properties": {
-                "id": {
+                "ID": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 10
+                }
+            }
+        }
+
+        docs["components"]["schemas"][obj.name +"_dehydrated"] = {
+            "type": "object",
+            "properties": {
+                "ID": {
                     "type": "integer",
                     "format": "int64",
                     "example": 10
@@ -180,8 +205,15 @@ def generate_docs(p: Program) -> str:
 
         for field in obj.fields:
             docs["components"]["schemas"][obj.name]["properties"][field.name] = {
-                "type": field.t,
+                "type":  correct_type(field.t),
                 "example": example_for_type(field.t)
             }
+
+            if not field.is_derived():
+                docs["components"]["schemas"][obj.name+"_dehydrated"]["properties"][field.name] = {
+                    "type":  correct_type(field.t),
+                    "example": example_for_type(field.t)
+                }
+                
 
     return dumps(docs, indent=4)
