@@ -5,6 +5,8 @@ from generator.structs.struct import Struct
 from generator.sql.schema import Schema
 from generator.sql.connection import Connection
 from generator.build.build import generate_build, generate_up
+from generator.Docs import generate_docs
+
 
 def create_for(p: Program, o: Writer):
     #create the routes
@@ -43,6 +45,11 @@ def create_for(p: Program, o: Writer):
     generate_build(p.name, o)
     generate_up(p.name, o)
     
+
+    #generate openapi spec
+    o.use_file("openapi.json")
+
+    o.w(generate_docs(p))
 
     o.flush()
 
