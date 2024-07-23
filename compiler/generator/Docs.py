@@ -13,10 +13,11 @@ def example_for_type(t: str) -> str:
         return 10.5
     elif t == "boolean":
         return True
-    elif t == "array":
-        return []
+    elif "[]" in t:
+        ex = example_for_type(t.replace("[]", ""))
+        return f"[{ex}, {ex}]"
     else:
-        return "An integer ID referencing a "+t
+        return "Integer ID referencing a "+t
     
 def correct_type(t: str) -> str:
     if t == "string":
@@ -132,7 +133,7 @@ def generate_docs(p: Program) -> str:
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": f"#/components/schemas/{obj.name}_dehydrated"
+                                "$ref": f"#/components/schemas/{obj.name}_update"
                             }
                         }
                     }
@@ -203,16 +204,34 @@ def generate_docs(p: Program) -> str:
             }
         }
 
+        docs["components"]["schemas"][obj.name+"_update"] = {
+            "type": "object",
+            "properties": {
+                "obj": {
+                    "$ref": f"#/components/schemas/{obj.name}_dehydrated"
+                }
+            }
+        }
+
         for field in obj.fields:
             docs["components"]["schemas"][obj.name]["properties"][field.name] = {
                 "type":  correct_type(field.t),
                 "example": example_for_type(field.t)
             }
 
-            if not field.is_derived():
+            if not field.is_derived() and not field.is_list():
                 docs["components"]["schemas"][obj.name+"_dehydrated"]["properties"][field.name] = {
                     "type":  correct_type(field.t),
                     "example": example_for_type(field.t)
+                }
+
+            if field.is_list():
+                docs["components"]["schemas"][obj.name+"_update"]["properties"]["LA_"+field.name] = {
+                    "type": "array",
+                    "items": {
+                        "type": correct_type(field.t),
+                        "example": example_for_type(field.t)[1:-1]
+                    }
                 }
                 
 
