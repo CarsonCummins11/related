@@ -8,11 +8,12 @@ if TYPE_CHECKING:
     from structures.program import Program
 
 class Object:
-    def __init__(self, name:str, fields: List[Field], context: "Program"):
+    def __init__(self, name:str, fields: List[Field], governance: Governance, context: "Program"):
         self.name = name
         self.fields = fields
         assert context, "Context must be provided to object"
         self.context = context
+        self.governance = governance
 
     def get_field(self, name: str) -> Field:
         if "." in name:
@@ -61,6 +62,14 @@ class Object:
             reader.pop_whitespace()
         assert reader.pop() == "}", "Expected }"
         reader.pop_whitespace()
+
+        governance = Governance(context, {
+            "C": True,
+            "R": True,
+            "U": True,
+            "D": True
+        })
+
 
         #parse governance string if present
         if reader.peek() == "-":

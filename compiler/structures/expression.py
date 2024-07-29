@@ -168,7 +168,8 @@ class BooleanExpression:
     def parse(reader: Reader, context: "Program"):
         left = Expression.parse(reader, context)
         reader.pop_whitespace()
-        op = reader.pop()
+        op = reader.read_while_matching("[<>=!]")
+        assert op != "", "Expected comparison operator"
         reader.pop_whitespace()
         right = Expression.parse(reader, context)
         return BooleanExpression(left, right, op)

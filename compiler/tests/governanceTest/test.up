@@ -1,0 +1,10 @@
+$UserObject {
+    Name: @string;
+    SecretPosts: []Post - CRUD: $.ID == ID;
+}
+
+Post{
+    Date: @string;
+    Content: @string;
+    PostedBy: @UserObject;
+} - CUD: $.ID == PostedBy.ID
