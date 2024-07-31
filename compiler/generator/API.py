@@ -31,6 +31,7 @@ def create_for(p: Program, o: Writer):
         o.w("import (")
         o.w('   "context"')
         o.w('   "strconv"')
+        o.w('   "errors"')
         if len(Struct.for_object(obj).function_derived_fields()) > 0:
             o.w(f'   "{o.package()}/derived"')
         o.w(")")

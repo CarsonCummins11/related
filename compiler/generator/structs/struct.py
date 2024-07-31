@@ -6,6 +6,7 @@ from iostuff.writer import Writer
 from structures.field import Field, DerivedField
 from structures.object import Object
 from structures.expression import VariableExpression
+from structures.governance import Governance
 
 
 def correct_go_type(t: str) -> str:
@@ -32,9 +33,10 @@ def correct_go_type_unhydrated(t: str) -> str:
 
 
 class Struct:
-    def __init__(self, name: str, fields: List[Field], context: Program):
+    def __init__(self, name: str, fields: List[Field], governance: Governance, context: Program):
         self.name = name
         self.fields = fields
+        self.governance = governance
         self.context = context
 
     def generate(self, o: Writer):
@@ -72,7 +74,7 @@ class Struct:
     
     @staticmethod
     def for_object(obj: Object) -> 'Struct':
-        return Struct(obj.name, obj.fields, obj.context)
+        return Struct(obj.name, obj.fields, obj.governance, obj.context)
 
 
 class StructHydrator:
@@ -155,7 +157,10 @@ class StructCreator:
 
     def generate(self, o: Writer):
         o.w(f'func (obj {self.s.name}) Create() ({self.s.name}Hydrated, error) {{')
-
+        #check governance allows create op
+        o.w(f'    if !({self.s.governance.get_permission("C").get_executable_str()}) {{')
+        o.w(f'        return {self.s.name}Hydrated{{}}, errors.New("Create operation not allowed")')
+        o.w(f'    }}')
         if len(self.s.stored_fields()) == 0:
             o.w(f'    err := DB.QueryRow(context.TODO(),"INSERT INTO {self.s.name} DEFAULT VALUES RETURNING ID").Scan(&obj.ID)')
             o.w(f'    if err != nil {{')
