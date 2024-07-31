@@ -63,6 +63,7 @@ class ConstantExpression(Expression):
         self.t = t
     @staticmethod
     def parse(reader: Reader, context: "Program") -> "ConstantExpression":
+        print("parsing constant expression")
         if reader.peek() == '"':
             reader.pop()
             value = reader.readuntil('"')
@@ -107,6 +108,7 @@ class VariableExpression(Expression):
     def parse(reader: Reader, obj: str, field_name: str, context: "Program") -> Expression:
         name = reader.read_while_matching("[a-zA-Z0-9_\.]")
         assert name != "", "Variable name cannot be empty"
+        print("parsing variable expression for var", name)
         assert name[0].isalpha(), f"Variable name {name} must start with a letter"
         vr = VariableExpression(name, obj, "unknown", context)
         context.assert_variable_eventually_exists(vr)
@@ -155,3 +157,29 @@ class FunctionExpression(Expression):
     
     def get_derivation_string(self) -> str:
         return f"derived.{self.name}({', '.join(map(lambda x: x.get_derivation_string(), self.args))})"
+    
+
+
+class BooleanExpression:
+
+    def __init__(self, left: Expression, right: Expression, op: str):
+        self.left = left
+        self.right = right
+        self.op = op
+
+    @staticmethod
+    def parse(reader: Reader, obj: str, context: "Program"):
+        print("parsing boolean expression in object", obj)
+        left = Expression.parse(reader,obj,"arbitrary boolean expression", context)
+        reader.pop_whitespace()
+        op = reader.read_while_matching("[<>=!]")
+        assert op != "", "Expected comparison operator"
+        reader.pop_whitespace()
+        right = Expression.parse(reader,obj,"arbitrary boolean  expression", context)
+        return BooleanExpression(left, right, op)
+
+
+    def get_executable_str(self):
+        return f"{self.left.get_derivation_string()} {self.op} {self.right.get_derivation_string()}"
+
+TRUE_EXPRESSION = BooleanExpression(ConstantExpression(True, "bool"), ConstantExpression(True, "bool"), "==")

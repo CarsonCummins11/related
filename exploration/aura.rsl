@@ -8,8 +8,7 @@
 
 
 # Todos to get this to work are:
-# lists
-# authentication
+# data access governence
 # *Type{} syntax for queries
 # blob files
 # eventually derivations
@@ -20,23 +19,12 @@ Account {
     Icon: @Image - U: llm("Is this a real person", Icon);
     Subjects: []string;
     ResearchGroup: @ResearchGroup;
+    Type: @string;
+    Resume: @file;
 } - R:(True) UD: ($.Email == Email);
 
-Account:Student{
-    TheAccount: Account
-    URL: FormatURL("student",ID);
-    Resume: @Document;
-    Summary: LLM("Summarize a student based on this information",Resume,Description) eventually;
-    Applications: []Application RUD:($.Email == Email);
-}
-
-Mentor{
-    TheAccount: Account;
-    URL: FormatURL("mentor",ID);
-}
-
 Application{
-    Applicant: @Student;
+    Applicant: @Account;
     Application: []string;
     To: @ResearchGroup; 
     Accepted: @bool;
@@ -46,12 +34,6 @@ Application{
 ResearchGroup {
     Name: @string;
     Description: @string;
-    Mentors: *Mentor{
-        TheAccount.ResearchGroup.ID equals ID;
-    } eventually;
-    Students: *Student{
-        TheAccount.ResearchGroup.ID equals ID;
-    } eventually;
     Icon: @string;
     Subjects: []string;
     AcceptingApplicants: @bool;

@@ -1,0 +1,3 @@
+Test{
+    CantBeOne: @int;
+} - CRUD: CantBeOne != 1;

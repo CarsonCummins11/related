@@ -2,16 +2,19 @@
 from typing import List
 from iostuff.reader import Reader
 from structures.field import Field
+from structures.governance import Governance
+from structures.expression import TRUE_EXPRESSION
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from structures.program import Program
 
 class Object:
-    def __init__(self, name:str, fields: List[Field], context: "Program"):
+    def __init__(self, name:str, fields: List[Field], governance: Governance, context: "Program"):
         self.name = name
         self.fields = fields
         assert context, "Context must be provided to object"
         self.context = context
+        self.governance = governance
 
     def get_field(self, name: str) -> Field:
         if "." in name:
@@ -48,7 +51,7 @@ class Object:
     @staticmethod
     def parse(reader: Reader, context: "Program") -> "Object":
         name = reader.read_while_matching("[a-zA-Z0-9_]")
-        assert name != "", "Object name cannot be empty"
+        assert name != "", "object name cant start with "+reader.pop()#"Object name cannot be empty"
         assert name[0].isalpha(), "Object name must start with a letter"
         assert not context.has_object(name), f"Object {name} already exists"
         reader.pop_whitespace()
@@ -61,4 +64,16 @@ class Object:
         assert reader.pop() == "}", "Expected }"
         reader.pop_whitespace()
 
-        return Object(name, fields, context)
+        governance = Governance(context, {
+            "C": TRUE_EXPRESSION,
+            "R": TRUE_EXPRESSION,
+            "U": TRUE_EXPRESSION,
+            "D": TRUE_EXPRESSION
+        })
+
+
+        #parse governance string if present
+        if reader.peek() == "-":
+            governance = Governance.parse(reader, name, context)
+
+        return Object(name, fields, governance, context)
