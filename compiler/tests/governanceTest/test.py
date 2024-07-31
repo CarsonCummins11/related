@@ -16,4 +16,3 @@ print("creating an Test with CantBeOne = 1, should fail")
 r = requests.post('http://localhost:8080/Test/', json={'CantBeOne': 1})
 assert r.status_code == 500
 print(r.text)
-

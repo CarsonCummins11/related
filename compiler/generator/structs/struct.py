@@ -196,10 +196,15 @@ class StructUpdater:
         self.s = s
 
     def generate(self, o: Writer):
+
         add_list_fields = "".join([f", _LA_{field.name} {field.t if field.t.replace('[]','') in PRIMITIVES else '[]int'}" for field in self.s.fields if field.is_list()])
         delete_list_fields = "".join([f", _LD_{field.name} []int" for field in self.s.fields if field.is_list()])
 
         o.w(f'func (obj {self.s.name}) Update(id string{add_list_fields}{delete_list_fields}) ({self.s.name}Hydrated,error) {{')
+        #check governance allows update op
+        o.w(f'    if !({self.s.governance.get_permission("U").get_executable_str()}) {{')
+        o.w(f'        return {self.s.name}Hydrated{{}}, errors.New("Update operation not allowed")')
+        o.w(f'    }}')
 
         if len(self.s.stored_fields()) == 0:
             o.w(f'var err error;')
@@ -258,6 +263,7 @@ class StructReader:
 
     def generate(self, o: Writer):
         o.w(f'func Read{self.s.name}(id string) ({self.s.name}Hydrated, error) {{')
+
         if len(self.s.stored_fields()) == 0:
             o.w(f'    int_id,erro := strconv.Atoi(id)')
             o.w(f'    if erro != nil {{')
@@ -272,6 +278,13 @@ class StructReader:
         o.w(f'        return {self.s.name}Hydrated{{}}, erro')
         o.w(f'    }}')
         o.w(f'    obj.ID = int_id')
+
+        #check governance allows read op
+        o.w(f'    if !({self.s.governance.get_permission("R").get_executable_str()}) {{')
+        o.w(f'        return {self.s.name}Hydrated{{}}, errors.New("Read operation not allowed")')
+        o.w(f'    }}')
+
+
         query_str = f'err := DB.QueryRow(context.TODO(),"SELECT '
         query_str += ", ".join([field.name for field in self.s.stored_fields()])
         query_str += f' FROM {self.s.name} WHERE ID = $1", id).Scan('
@@ -295,7 +308,16 @@ class StructDeleter:
 
     def generate(self, o: Writer):
         o.w(f'func Delete{self.s.name}(id string) error {{')
-        o.w(f'    _, err := DB.Exec(context.TODO(),"DELETE FROM {self.s.name} WHERE ID = $1", id)')
+
+        #get the object to do governance checks on it
+        o.w(f'    obj,err := Read{self.s.name}(id)')
+
+        #check governance allows delete op
+        o.w(f'    if !({self.s.governance.get_permission("D").get_executable_str()}) {{')
+        o.w(f'        return errors.New("Delete operation not allowed")')
+        o.w(f'    }}')
+
+        o.w(f'    _, err = DB.Exec(context.TODO(),"DELETE FROM {self.s.name} WHERE ID = $1", id)')
         o.w(f'    if err != nil {{')
         o.w(f'        return err')
         o.w(f'    }}')
