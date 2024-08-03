@@ -13,13 +13,13 @@ Here is an example of a simple collaborative document editor API implemented in 
 Document {
     Owner: @User;
     Editors: []User;
-    Edits: []Edit - RU: $ in Editors || $ = Owner D: $ = Owner;
+    Edits: []Edit - RU: $ in Editors || $ == Owner D: $ == Owner;
     DocHTML: AssembleDocument(Edits);
     EditsByOwner: Query("SELECT * FROM Edit WHERE Author = ", Owner.ID);
-} -  CRUD: $.ID = Owner.ID 
+} -  CRUD: $.ID == Owner.ID 
 $User{
     Name: @string;
-} - CRUD: $.ID = ID
+} - CRUD: $.ID == ID
 
 Edit{
     StartAt: @int;
