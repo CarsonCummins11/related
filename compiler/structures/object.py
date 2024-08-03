@@ -1,7 +1,7 @@
 #an object is a named list of fields
 from typing import List
 from iostuff.reader import Reader
-from structures.field import Field
+from structures.field import Field, PrimitiveField
 from structures.governance import Governance
 from structures.expression import TRUE_EXPRESSION
 from typing import TYPE_CHECKING
@@ -9,12 +9,13 @@ if TYPE_CHECKING:
     from structures.program import Program
 
 class Object:
-    def __init__(self, name:str, fields: List[Field], governance: Governance, context: "Program"):
+    def __init__(self, name:str, fields: List[Field], governance: Governance, context: "Program", is_user_object = False):
         self.name = name
         self.fields = fields
         assert context, "Context must be provided to object"
         self.context = context
         self.governance = governance
+        self.is_user_object = is_user_object
 
     def get_field(self, name: str) -> Field:
         if "." in name:
@@ -50,14 +51,23 @@ class Object:
 
     @staticmethod
     def parse(reader: Reader, context: "Program") -> "Object":
-        name = reader.read_while_matching("[a-zA-Z0-9_]")
+        name = reader.read_while_matching("[a-zA-Z0-9_$]")
         assert name != "", "object name cant start with "+reader.pop()#"Object name cannot be empty"
-        assert name[0].isalpha(), "Object name must start with a letter"
+        assert name[0].isalpha() or name[0] == "$", "Object name must start with a letter or $ if object is user account"
+
+        fields = []
+
+        is_user_object =  name[0] == "$"
+        if is_user_object:
+            name = name[1:]
+            context.set_user_object_name(name)
+            #add session token and password hash fields
+            fields = [PrimitiveField("S__session_token__",name, "string"), PrimitiveField("S__password_hash__",name, "string")]
+            
         assert not context.has_object(name), f"Object {name} already exists"
         reader.pop_whitespace()
         assert reader.pop() == "{", "Expected {"
         reader.pop_whitespace()
-        fields = []
         while reader.peek() != "}":
             fields.append(Field.parse(reader, name, context))
             reader.pop_whitespace()
@@ -76,4 +86,4 @@ class Object:
         if reader.peek() == "-":
             governance = Governance.parse(reader, name, context)
 
-        return Object(name, fields, governance, context)
+        return Object(name, fields, governance, context, is_user_object)

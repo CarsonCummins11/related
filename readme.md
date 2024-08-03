@@ -47,7 +47,12 @@ A governance clause is true iff current state of data can be transitioned to the
 
 `Must_Be_One: @int - CUD: Must_Be_One == 1;`
 
-Would allow Create, Update, Delete access to all changes that result in the stored integer Must_Be_One remaining equal to 1. 
+Would allow Create, Update, Delete access to all changes that result in the stored integer Must_Be_One remaining equal to 1. This is used
+to restrict the domains of typesets. It can also be used to handle authorization, a statement like:
+
+`User_Object: @User - UR: $ == User_Object;`
+
+restrics authorization to update and read a user object field to users who are that user object.
 
 Functions, like AssembleDocument or Query must be implemented in Go in a folder called derivations. Look at the tests for examples.
 

@@ -8,10 +8,11 @@ from structures.expression import VariableExpression
 PRIMITIVES = ["int", "float", "bool", "string"]
 
 class Program:
-    def __init__(self, name: str, objects: List[Object] = [], functions: List[Function] = []):
+    def __init__(self, name: str, objects: List[Object] = [], functions: List[Function] = [], user_object_name = ""):
         self.objects = objects
         self.functions = functions
         self.name = name
+        self.user_object_name = user_object_name
 
         self.types_must_exist: List[str] = []
         self.variables_must_exist: List[VariableExpression] = []
@@ -20,6 +21,11 @@ class Program:
 
     def assert_type_eventually_exists(self, t: str):
         self.types_must_exist.append(t)
+
+    def set_user_object_name(self, name: str):
+        if self.user_object_name:
+            raise Exception("Multiple user objects defined, only one allowed")
+        self.user_object_name = name
     
     def assert_variable_eventually_exists(self, v: VariableExpression):
         self.variables_must_exist.append(v)
