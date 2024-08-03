@@ -3,3 +3,4 @@ __pycache__
 .venv
 .vscode
 compiler/tests/trg
+server_logs.txt

@@ -43,3 +43,10 @@ A governance clause is true iff current state of data can be transitioned to the
 Would allow Create, Update, Delete access to all changes that result in the stored integer Must_Be_One remaining equal to 1. 
 
 Functions, like AssembleDocument or Query must be implemented in Go in a folder called derivations. Look at the tests for examples.
+
+
+
+
+cloudpickle, crcmod, dill, fastavro, fasteners, grpcio, hdfs, httplib2, jsonpickle, jsonschema, numpy, objsize, orjson, packaging, proto-plus, protobuf, pyarrow, pyarrow-hotfix, pydot, pymongo, python-dateutil, pytz, redis, regex, requests, typing-extensions, zstandard
+
+
