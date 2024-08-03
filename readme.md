@@ -30,10 +30,15 @@ Edit{
 ```
 
 ###  "documentation"
-@ - store this value
-[] - a stored list value
-$ - the object associated with login
-\- start of a governance clause
+@TYPE is a stored value of type TYPE
+
+[]TYPE is a stored list of TYPEs
+
+$TYPE is an object that will be attached to to the logged in user
+
+$ is the currently logged in user
+
+\- is the start of a governance clause
 
 
 
