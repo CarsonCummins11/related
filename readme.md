@@ -39,14 +39,24 @@ $ - the object associated with login
 
 
 A governance clause is true iff current state of data can be transitioned to the next state for the op. So,
+
 `Must_Be_One: @int - CUD: Must_Be_One == 1;`
+
 Would allow Create, Update, Delete access to all changes that result in the stored integer Must_Be_One remaining equal to 1. 
 
 Functions, like AssembleDocument or Query must be implemented in Go in a folder called derivations. Look at the tests for examples.
 
 
+## other things?
 
+Most of this works, but not all. See the tests for things that are supported, there are also issues for things that are missing.
 
-cloudpickle, crcmod, dill, fastavro, fasteners, grpcio, hdfs, httplib2, jsonpickle, jsonschema, numpy, objsize, orjson, packaging, proto-plus, protobuf, pyarrow, pyarrow-hotfix, pydot, pymongo, python-dateutil, pytz, redis, regex, requests, typing-extensions, zstandard
+You can run all tests like
+```
+cd compiler
+python tests.py -r
+```
+
+you can run an individual server with the build.sh script to build, up.sh script to run. This also requires you to be running a local SQL server.
 
 
