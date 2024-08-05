@@ -38,8 +38,12 @@ class Program:
             assert self.has_type(t), f"Type {t} must exist"
         
         for v in self.variables_must_exist:
-            obj = self.get_object(v.obj)
-            assert obj.has_field(v.name), f"Variable {v} must exist"
+            if v.obj == "S__logged_in_user__":
+                obj = self.get_object(self.user_object_name)
+            else:
+                obj = self.get_object(v.obj)
+
+            assert obj.has_field(v.name), f"Variable {v} must exist, object only has fields {[x.name for x in obj.fields]}"
             vv = obj.get_field(v.name)
             v.t = vv.t
         

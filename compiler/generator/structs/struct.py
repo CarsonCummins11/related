@@ -127,7 +127,7 @@ class StructHydrator:
                     o.w(f'    return real_ret')
                 o.w('}')
                 o.w()
-        o.w(f'func (obj {self.s.name}) Hydrate() {self.s.name}Hydrated {{')
+        o.w(f'func (obj {self.s.name}) Hydrate(S__logged_in_user__ {self.s.context.user_object_name}) {self.s.name}Hydrated {{')
         for field in self.s.fields:
             if field.is_list():
                 o.w(f'    _L_{field.name} := obj.FetchList_{field.name}()')
@@ -140,7 +140,10 @@ class StructHydrator:
 
         o.w(f'    return {self.s.name}Hydrated{{')
         for field in self.s.fields:
-            o.w(f'      {field.name}: {field.get_derivation_string()},')
+            if field.name == "S__password_hash__":
+                o.w(f'      {field.name}: "",')
+            else:
+                o.w(f'      {field.name}: {field.get_derivation_string()},')
         o.w(f'        ID: obj.ID,')
         o.w('    }')
         o.w('}')
@@ -156,7 +159,7 @@ class StructCreator:
         self.s = s
 
     def generate(self, o: Writer):
-        o.w(f'func (obj {self.s.name}) Create() ({self.s.name}Hydrated, error) {{')
+        o.w(f'func (obj {self.s.name}) Create(S__logged_in_user__ {self.s.context.user_object_name}) ({self.s.name}Hydrated, error) {{')
         #check governance allows create op
         o.w(f'    if !({self.s.governance.get_permission("C").get_executable_str()}) {{')
         o.w(f'        return {self.s.name}Hydrated{{}}, errors.New("Create operation not allowed")')
@@ -166,7 +169,7 @@ class StructCreator:
             o.w(f'    if err != nil {{')
             o.w(f'        return {self.s.name}Hydrated{{}}, err')
             o.w(f'    }}')
-            o.w(f'    return obj.Hydrate(), err')
+            o.w(f'    return obj.Hydrate(S__logged_in_user__), err')
             o.w('}')
             o.w()
             return
@@ -183,7 +186,7 @@ class StructCreator:
         o.w(f'    if err != nil {{')
         o.w(f'        return {self.s.name}Hydrated{{}}, err')
         o.w(f'    }}')
-        o.w(f'    return obj.Hydrate(), err')
+        o.w(f'    return obj.Hydrate(S__logged_in_user__), err')
         o.w('}')
         o.w()
 
@@ -200,7 +203,7 @@ class StructUpdater:
         add_list_fields = "".join([f", _LA_{field.name} {field.t if field.t.replace('[]','') in PRIMITIVES else '[]int'}" for field in self.s.fields if field.is_list()])
         delete_list_fields = "".join([f", _LD_{field.name} []int" for field in self.s.fields if field.is_list()])
 
-        o.w(f'func (obj {self.s.name}) Update(id string{add_list_fields}{delete_list_fields}) ({self.s.name}Hydrated,error) {{')
+        o.w(f'func (obj {self.s.name}) Update(id string{add_list_fields}{delete_list_fields}, S__logged_in_user__ {self.s.context.user_object_name}) ({self.s.name}Hydrated,error) {{')
         #check governance allows update op
         o.w(f'    if !({self.s.governance.get_permission("U").get_executable_str()}) {{')
         o.w(f'        return {self.s.name}Hydrated{{}}, errors.New("Update operation not allowed")')
@@ -249,7 +252,7 @@ class StructUpdater:
                 #an update will be a delete followed by an insert, can be sent at the same time
             
 
-        o.w(f'    return obj.Hydrate(), err')
+        o.w(f'    return obj.Hydrate(S__logged_in_user__), err')
         o.w('}')
         o.w()
 
@@ -262,7 +265,7 @@ class StructReader:
         self.s = s
 
     def generate(self, o: Writer):
-        o.w(f'func Read{self.s.name}(id string) ({self.s.name}Hydrated, error) {{')
+        o.w(f'func Read{self.s.name}(id string, S__logged_in_user__ {self.s.context.user_object_name}) ({self.s.name}Hydrated, error) {{')
 
         if len(self.s.stored_fields()) == 0:
             o.w(f'    int_id,erro := strconv.Atoi(id)')
@@ -294,7 +297,7 @@ class StructReader:
         o.w(f'    if err != nil {{')
         o.w(f'        return {self.s.name}Hydrated{{}}, err')
         o.w(f'    }}')
-        o.w(f'    return obj.Hydrate(), err')
+        o.w(f'    return obj.Hydrate(S__logged_in_user__), err')
         o.w('}')
         o.w()
 
@@ -307,10 +310,10 @@ class StructDeleter:
         self.s = s
 
     def generate(self, o: Writer):
-        o.w(f'func Delete{self.s.name}(id string) error {{')
+        o.w(f'func Delete{self.s.name}(id string, S__logged_in_user__ {self.s.context.user_object_name}) error {{')
 
         #get the object to do governance checks on it
-        o.w(f'    obj,err := Read{self.s.name}(id)')
+        o.w(f'    obj,err := Read{self.s.name}(id, S__logged_in_user__)')
 
         #check governance allows delete op
         o.w(f'    if !({self.s.governance.get_permission("D").get_executable_str()}) {{')

@@ -32,11 +32,12 @@ class Expression:
     
     @staticmethod
     def parse(reader: Reader, obj:str, field_name: str, context: "Program") -> "Expression":
+        
         if reader.peek() == '"' or reader.peek().isdigit():
             return ConstantExpression.parse(reader, context)
         startpos = reader.get_pos()
-        if reader.peek().isalpha():
-            name = reader.read_while_matching("[a-zA-Z0-9_\.]")
+        if reader.peek().isalpha() or reader.peek() == "$":
+            name = reader.read_while_matching("[$a-zA-Z0-9_\.]")
             if reader.peek() == "(":
                 reader.pop()
                 reader.set_pos(startpos)
@@ -106,10 +107,22 @@ class VariableExpression(Expression):
         assert self.context, "Program context must be provided"
     @staticmethod
     def parse(reader: Reader, obj: str, field_name: str, context: "Program") -> Expression:
-        name = reader.read_while_matching("[a-zA-Z0-9_\.]")
+        name = reader.read_while_matching("[a-zA-Z0-9_\.$]")
         assert name != "", "Variable name cannot be empty"
         print("parsing variable expression for var", name)
-        assert name[0].isalpha(), f"Variable name {name} must start with a letter"
+        assert name[0].isalpha() or name[0] == "$", f"Variable name {name} must start with a letter or $ if variable is user object"
+
+        is_user_var = name[0] == "$"
+        if name[0] == "$":
+            if len(name) == 1:
+                name = ""
+            elif name[1] == ".":
+                name = name[2:]
+            else:
+                raise Exception("variable names cannot start with $")
+            
+            obj = "S__logged_in_user__"
+
         vr = VariableExpression(name, obj, "unknown", context)
         context.assert_variable_eventually_exists(vr)
         return vr
@@ -122,6 +135,8 @@ class VariableExpression(Expression):
             return f"_L_{self.name}"
         if "." in self.name:
             return self.name
+        if self.obj == "S__logged_in_user__":
+            return f"S__logged_in_user__" + (f".{self.name}" if self.name else "")
         return f"obj.{self.name}"
 
 class FunctionExpression(Expression):

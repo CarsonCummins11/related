@@ -1,0 +1,3 @@
+$UserObject {
+    Name: @string;
+} - UD: $.S__session_token__ == S__session_token__;

@@ -16,12 +16,49 @@ def create_for(p: Program, o: Writer):
     o.w("import (")
     o.w('   "github.com/gin-gonic/gin"')
     o.w(f'   "{o.package()}/routes"')
+    o.w(f'   "{o.package()}/models"')
     o.w(")")
     o.w()
+    #helper function to attach authorized user to context
+    o.w("func AttachUserIfAuthorized(c *gin.Context) {")
+    #get header
+    o.w("   token := c.GetHeader(\"Authorization\")")
+    o.w("   if token == \"\" {")
+    o.w("       c.Next()")
+    o.w("       return")
+    o.w("   }")
+    o.w("   user, err := models.GetUserBySessionToken(token)")
+    o.w("   if err != nil {")
+    o.w("       c.Next()")
+    o.w("       return")
+    o.w("   }")
+    o.w("   c.Set(\"user\", user)")
+    o.w("   c.Next()")
+    o.w("}")
     o.w("func main() {")
     Router.for_program(p).generate(o)
     o.w("}")
 
+
+     #write the GetUserBySessionToken function
+    o.use_file("models/authuser__.go")
+    o.w("package models")
+    o.w()
+    o.w("import (")
+    o.w('   "context"')
+    o.w(')')
+
+    o.w(f"func GetUserBySessionToken(token string) ({p.user_object_name}, error) {{")
+    o.w(f"    var user {p.user_object_name}")
+    o.w(f"    err := DB.QueryRow(context.Background(), `SELECT * FROM {p.user_object_name} WHERE S__session_token__ = $1`, token).Scan(")
+    for field in p.get_object(p.user_object_name).stored_fields():
+        o.w(f"        &user.{field.name},")
+    o.w(f"    )")
+    o.w(f"    if err != nil {{")
+    o.w(f"        return user, err")
+    o.w(f"    }}")
+    o.w(f"    return user, nil")
+    o.w(f"}}")
 
     #create the models
     for obj in p.objects:
@@ -35,6 +72,9 @@ def create_for(p: Program, o: Writer):
         if len(Struct.for_object(obj).function_derived_fields()) > 0:
             o.w(f'   "{o.package()}/derived"')
         o.w(")")
+        o.w()
+        #write the Create function
+
         Struct.for_object(obj).generate(o)
 
     
