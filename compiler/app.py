@@ -19,9 +19,10 @@ def gather_function_table(path: str = "derived") -> List[Function]:
         with open("go.mod", "w") as f:
             f.write("module derived")
 
-    proc = subprocess.Popen(f"go doc -C {path} -short derived | grep '^[ ]*func ' ",shell=True, stdout=subprocess.PIPE)
+    proc = subprocess.Popen(f"go doc -C {path} | grep '^[ ]*func ' ",shell=True, stdout=subprocess.PIPE)
     functypes = [x.decode().replace("\n","") for x in proc.stdout.readlines()]
-    print(functypes)
+
+    print(f"This is the functype printing:   \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n {functypes}")
     function_table = []
     for ft in functypes:
         if not ft:

@@ -311,6 +311,7 @@ class StructDeleter:
 
         #get the object to do governance checks on it
         o.w(f'    obj,err := Read{self.s.name}(id)')
+        o.w(f'    obj = obj') #to avoid unused variable error
 
         #check governance allows delete op
         o.w(f'    if !({self.s.governance.get_permission("D").get_executable_str()}) {{')
